@@ -29,6 +29,11 @@ coming from upslope is larger than before 2021. **A rotation that keeps the soil
 melliferous cover crop, a perennial strip on slopes) cuts the erosion risk exactly when it peaks. It can also feed the
 animals, fix nitrogen and give the beekeepers back some forage.
 
+**GPM IMERG daily 2001–2024: September–December bring 58 % of the year's erosive rain** (December alone 21 %),
+exactly the months between the June harvest and November sowing when cereal → fallow fields are bare. The wettest
+day of the record is **5 Sep 2023 (82 mm, storm Daniel)**. (`data/processed/imerg_monthly_normals_2001_2024.csv`;
+erosivity index ΣP^1.81 of days ≥ 12.7 mm, Richardson et al. 1983, used for timing only.)
+
 Evidence (2026-11-09): **GPM IMERG: October 2021 = 147 mm over the study area, about 3× the 2000–2024 median
 (50 mm) and the 2nd-wettest October since 2000**; storm "Athena" (8–12 Oct) flooded Agia Anna, Achladi and Kotsikia
 two months after the fire. Oct–Dec are the wettest months (POWER 1991–2020 normals). **Do not use POWER's "record

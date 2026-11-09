@@ -29,7 +29,10 @@ coming from upslope is larger than before 2021. **A rotation that keeps the soil
 melliferous cover crop, a perennial strip on slopes) cuts the erosion risk exactly when it peaks. It can also feed the
 animals, fix nitrogen and give the beekeepers back some forage.
 
-To check: GPM monthly erosivity vs. HLS/MODIS NDVI bare months; NDVI recovery of the burn scar since 2021.
+First evidence (2026-11-09, NASA POWER at the study-area cell): **October 2021 had 327 mm, the wettest October since
+1981** (median 38 mm), and **8–11 Oct 2021 brought 225 mm, the largest 4-day total in the record**: storm "Athena",
+two months after the fire, flooded Agia Anna, Achladi and Kotsikia. Oct–Dec are the wettest months in the 1991–2020
+normals. Still to check: GPM IMERG (finer, needs Earthdata login), station data, bare months from NDVI.
 
 ## The rotations we compare (at least 3, the brief requires the current one)
 

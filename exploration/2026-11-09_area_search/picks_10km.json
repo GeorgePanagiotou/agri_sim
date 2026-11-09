@@ -1,0 +1,147 @@
+{
+ "stats": {
+  "tree": {
+   "total_ha": 154998,
+   "burned_ha": 40123
+  },
+  "shrub": {
+   "total_ha": 14442,
+   "burned_ha": 1068
+  },
+  "grass": {
+   "total_ha": 20723,
+   "burned_ha": 1653
+  },
+  "cropland": {
+   "total_ha": 11388,
+   "burned_ha": 835
+  },
+  "built": {
+   "total_ha": 3015,
+   "burned_ha": 33
+  },
+  "bare": {
+   "total_ha": 7478,
+   "burned_ha": 118
+  },
+  "wetland": {
+   "total_ha": 317,
+   "burned_ha": 25
+  },
+  "all_land": {
+   "total_ha": 212361,
+   "burned_ha": 43854
+  }
+ },
+ "window_km": 10.0,
+ "picks": [
+  {
+   "center_lonlat": [
+    23.3832,
+    38.803
+   ],
+   "bbox_wsen": [
+    23.3242,
+    38.7568,
+    23.4423,
+    38.8491
+   ],
+   "burned_cropland_ha": 371,
+   "cropland_ha": 1068,
+   "burned_grass_shrub_ha": 595,
+   "burned_forest_ha": 5648,
+   "unburned_forest_ha": 1328,
+   "score": 1076.4
+  },
+  {
+   "center_lonlat": [
+    23.269,
+    38.8389
+   ],
+   "bbox_wsen": [
+    23.21,
+    38.7928,
+    23.328,
+    38.8851
+   ],
+   "burned_cropland_ha": 70,
+   "cropland_ha": 191,
+   "burned_grass_shrub_ha": 397,
+   "burned_forest_ha": 7458,
+   "unburned_forest_ha": 842,
+   "score": 592.5
+  },
+  {
+   "center_lonlat": [
+    23.386,
+    38.8932
+   ],
+   "bbox_wsen": [
+    23.3269,
+    38.847,
+    23.4451,
+    38.9394
+   ],
+   "burned_cropland_ha": 26,
+   "cropland_ha": 81,
+   "burned_grass_shrub_ha": 536,
+   "burned_forest_ha": 7388,
+   "unburned_forest_ha": 761,
+   "score": 471.3
+  },
+  {
+   "center_lonlat": [
+    23.2716,
+    38.9292
+   ],
+   "bbox_wsen": [
+    23.2126,
+    38.883,
+    23.3307,
+    38.9753
+   ],
+   "burned_cropland_ha": 13,
+   "cropland_ha": 49,
+   "burned_grass_shrub_ha": 584,
+   "burned_forest_ha": 7934,
+   "unburned_forest_ha": 739,
+   "score": 394.0
+  },
+  {
+   "center_lonlat": [
+    23.1565,
+    38.9447
+   ],
+   "bbox_wsen": [
+    23.0975,
+    38.8986,
+    23.2156,
+    38.9908
+   ],
+   "burned_cropland_ha": 71,
+   "cropland_ha": 1154,
+   "burned_grass_shrub_ha": 64,
+   "burned_forest_ha": 1031,
+   "unburned_forest_ha": 4700,
+   "score": 167.5
+  },
+  {
+   "center_lonlat": [
+    23.4991,
+    38.8234
+   ],
+   "bbox_wsen": [
+    23.44,
+    38.7772,
+    23.5582,
+    38.8697
+   ],
+   "burned_cropland_ha": 128,
+   "cropland_ha": 939,
+   "burned_grass_shrub_ha": 33,
+   "burned_forest_ha": 292,
+   "unburned_forest_ha": 2957,
+   "score": 107.0
+  }
+ ]
+}

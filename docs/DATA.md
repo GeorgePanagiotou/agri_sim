@@ -42,6 +42,10 @@ and 250 m soil. The app must say so.
 | `data/processed/landsat_dnbr_2021_30m.tif` + `landsat_burn_scenes.csv` | **done** · Landsat 8/9 dNBR of the 2021 fire (3 pre + 3 post scenes) · `data_prep/landsat_burn_2021.py` | data |
 | `data/processed/landsat_field_map_30m.tif` | **done** · band 1 land use 2013–2020, band 2 land use 1985–1995 (0 water/none, 1 rainfed field, 2 irrigated summer field, 3 woody, 4 herbaceous/shrub = grazing, 5 bare/built), band 3 burn 2021 (0–4) · water from Landsat QA · `data_prep/landsat_field_map.py` | data |
 | `data/processed/landsat_field_years.nc` / `.csv` | **done** · per field pixel and agricultural year (Oct–Sep): 1 crop, 2 fallow/low, 3 summer crop, 9 no data; spring peak NDVI · yearly shares burned vs unburned | data |
+| `data/processed/terrain_30m.tif` | **done** · NASADEM on the Landsat grid: elevation, slope, upslope cells, RUSLE LS, upslope burned share · `data_prep/terrain_nasadem.py` | data |
+| `data/processed/modis_mcd64a1_2021_burndate.tif` | **done** · MODIS MCD64A1 burn day-of-year 2021 on the Landsat grid · `data_prep/modis_burned_area.py` | data |
+| `data/processed/imerg_daily_2001_2025.parquet` / `imerg_daily_area_mean.parquet` | GPM IMERG Final daily via GES DISC OPeNDAP (~600 B per day) · `data_prep/download_imerg_daily.py` | data |
+| `data/processed/imagery/` | **done** · small Landsat true-colour GeoTIFF + PNG for 1987, Jul 2021, Aug 2021, Apr 2022, Jun 2025 · `data_prep/landsat_rgb.py` | data |
 | `data/processed/imerg_vs_power_october.csv` | **done** · October rain 2000–2024, GPM IMERG monthly (mean / wettest cell) vs POWER | data |
 
 **Rule (2026-11-09): the product uses NASA / USGS data only** (Landsat, MODIS, GPM, SMAP, POWER, NASADEM, …).

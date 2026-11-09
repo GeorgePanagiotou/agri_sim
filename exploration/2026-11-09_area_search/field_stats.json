@@ -1,0 +1,46 @@
+{
+ "dnbr_threshold_from_unburned_herbaceous_p95": 0.233,
+ "fields_burned": {
+  "ha": 293,
+  "ndvi_spring21": 0.82,
+  "ndvi_spring22": 0.75,
+  "green_again_2022_share": 0.89
+ },
+ "fields_unburned": {
+  "ha": 738,
+  "ndvi_spring21": 0.8,
+  "ndvi_spring22": 0.68,
+  "green_again_2022_share": 0.76
+ },
+ "fields_inside_perimeter": {
+  "ha": 599,
+  "ndvi_spring21": 0.8,
+  "ndvi_spring22": 0.74,
+  "green_again_2022_share": 0.91
+ },
+ "fields_outside_perimeter": {
+  "ha": 433,
+  "ndvi_spring21": 0.81,
+  "ndvi_spring22": 0.6,
+  "green_again_2022_share": 0.65
+ },
+ "grazing_burned": {
+  "ha": 435,
+  "ndvi_spring21": 0.68,
+  "ndvi_spring22": 0.74,
+  "green_again_2022_share": 0.96
+ },
+ "grazing_unburned": {
+  "ha": 782,
+  "ndvi_spring21": 0.68,
+  "ndvi_spring22": 0.71,
+  "green_again_2022_share": 0.96
+ },
+ "irrigated_summer_crops": {
+  "ha": 809,
+  "ndvi_spring21": 0.17,
+  "ndvi_spring22": 0.33,
+  "green_again_2022_share": 0.43
+ },
+ "worldcover_cropland_total_ha": 2077
+}

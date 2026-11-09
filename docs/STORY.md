@@ -12,8 +12,13 @@ farmland in the valleys.
 ## The user
 
 A **farmer, livestock keeper or beekeeper whose fields, pastures or apiary areas burned in 2021** (the fire burned
-farmland, pasture and beehive areas too, not only forest). Specific spots to be chosen on the burn map **[?]**;
-candidates: Istiaia plain edge, Mantoudi/Kireas valley, hills around Limni and Agia Anna. They ask: *"My fields lose soil every autumn, summers are hotter
+farmland, pasture and beehive areas too, not only forest; EFFIS: 34 % of the 51,881 ha was agricultural land).
+
+**Proposed study area (2026-11-09) [?]: "Kireas – Agia Anna"**, lon 23.32–23.50, lat 38.75–38.95 (≈ 16 × 22 km).
+Field mosaic of Kechries / Kourkouloi / Skepasti / Strofylia (where the fire started), the Kireas valley fields near
+Mantoudi / Kirinthos (partly unburned = controls), grazing land round the villages, and the Agia Anna / Pappades pine
+forest (pine honey). In October 2021 storm "Athena" flooded Agia Anna, Achladi and Kotsikia. Details:
+`../notes/data_checks/area_search_2026-11-09/AREA_SEARCH.md` (outside the repo). They ask: *"My fields lose soil every autumn, summers are hotter
 and drier, and I lost income from the forest. What should I rotate on this field?"*
 
 ## The key insight (hypothesis, check with data first)

@@ -7,6 +7,9 @@ from pathlib import Path
 # Analysis area: North Evia (lon_min, lon_max, lat_min, lat_max), WGS84
 AOI = (22.80, 23.70, 38.60, 39.05)
 
+# Proposed study area (2026-11-09): "Kireas - Agia Anna", burned + unburned fields, grazing land, pine/honey forest
+STUDY_AREA = (23.32, 23.50, 38.75, 38.95)
+
 # Periods
 CLIMATE_START, CLIMATE_END = "1991-01-01", "2020-12-31"  # baseline normals
 RECORD_START = "1981-01-01"  # NASA POWER daily starts 1981

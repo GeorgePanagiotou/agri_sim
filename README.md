@@ -4,6 +4,7 @@ Crop-rotation decision support from NASA Earth observations, NASA Space Apps Cha
 (*Field Shift: Adapting Farms with NASA Data*). Demo region: North Evia, Greece, after the 2021 wildfires.
 
 ```
+                                                docs/SCOPE.md  high-level scope
 data_prep/   download + harmonize data         docs/STORY.md  what we build
 engine/      indicators, water, erosion, scores docs/DATA.md   data sources + file contract
 app/         Streamlit app                      docs/TASKS.md  tasks, roles, requests

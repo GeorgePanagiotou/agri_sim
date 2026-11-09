@@ -11,8 +11,9 @@ farmland in the valleys.
 
 ## The user
 
-A **farmer in a valley or plain next to the burn scar** (Istiaia plain, Mantoudi/Kireas valley **[?]**) with mostly
-rainfed annual fields and maybe goats/sheep or bees. They ask: *"My fields lose soil every autumn, summers are hotter
+A **farmer, livestock keeper or beekeeper whose fields, pastures or apiary areas burned in 2021** (the fire burned
+farmland, pasture and beehive areas too, not only forest). Specific spots to be chosen on the burn map **[?]**;
+candidates: Istiaia plain edge, Mantoudi/Kireas valley, hills around Limni and Agia Anna. They ask: *"My fields lose soil every autumn, summers are hotter
 and drier, and I lost income from the forest. What should I rotate on this field?"*
 
 ## The key insight (hypothesis, check with data first)
@@ -29,7 +30,7 @@ To check: GPM monthly erosivity vs. HLS/MODIS NDVI bare months; NDVI recovery of
 
 | # | Strategy | Idea |
 |---|---|---|
-| A | **Current**: winter wheat/barley → summer fallow **[?]** | Baseline |
+| A | **Current**: rebuilt from older satellite images (Landsat since the 1980s), e.g. cereal → summer fallow **[?]** | Baseline |
 | B | **Legume forage**: cereal → vetch–oat (or chickpea/lentil) | N-fixing, autumn cover, feed for goats/sheep |
 | C | **Bee & soil**: cereal → sainfoin / clover / phacelia, perennial aromatic strips (oregano, thyme) on slopes | Melliferous, all-year cover, niche market |
 | D | (optional) **Drought-tolerant**: barley → chickpea, less water | Water-saving if summers keep drying |

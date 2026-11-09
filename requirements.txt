@@ -10,6 +10,9 @@ numpy
 scipy
 pandas
 pyarrow
+pystac-client
+planetary-computer
+matplotlib
 geopandas
 streamlit
 plotly

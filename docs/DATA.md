@@ -34,6 +34,10 @@ and 250 m soil. The app must say so.
 
 | File | Content | Owner |
 |---|---|---|
+| `data/processed/power_daily_1981_2026.parquet` | **done** · NASA POWER daily at the study-area cell (23.41 E, 38.85 N): T2M, T2M_MAX/MIN, T2MDEW, RH2M, PRECTOTCORR, WS2M, ALLSKY_SFC_SW_DWN, PS, GWETTOP, GWETROOT · `data_prep/download_power.py` | data |
+| `data/processed/power_hourly_2021-10.parquet` | **done** · POWER hourly Oct 2021 (storm Athena): PRECTOTCORR, T2M, WS2M | data |
+| `data/processed/landsat_ndvi_monthly_30m.nc` | **done, local only (130 MB, git-ignored)** · monthly median Landsat C2 L2 NDVI 1984–2025, study area, 30 m UTM 34N, uint8 (`ndvi = (v-1)/200 - 0.25`, 0 = no data) + `nobs` · `data_prep/landsat_ndvi_history.py` (~15 min, window reads only) | data |
+| `data/processed/landsat_scenes.csv` | **done** · every Landsat scene used (id, date, platform, WRS path/row, cloud cover, valid share) | data |
 | `data/processed/climate_daily.parquet` | per demo point: date, tmax, tmin, precip, et0, … | data |
 | `data/processed/grid_30m.nc` | AOI grid: elevation, slope, LS, NDVI stats, soil | data |
 | `data/reference/crops.csv` | crop, Kc stages, season, N-fixing, root depth, cover by month, sources | engine |

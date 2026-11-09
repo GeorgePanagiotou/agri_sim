@@ -22,3 +22,6 @@ _netrc
 Thumbs.db
 .vscode/
 .idea/
+
+# Landsat NDVI cube (~150 MB): local only, rebuild with data_prep/landsat_ndvi_history.py
+data/processed/landsat_ndvi_monthly_30m.nc

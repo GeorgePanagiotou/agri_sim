@@ -20,6 +20,7 @@ It supports farmer judgment, never replaces it.
 | `data/output/` | Pre-computed engine results for the demo fields (small, in git) |
 | `app/` | Streamlit app; reads `data/` and calls `engine/` functions, no downloads |
 | `docs/` | Short docs; keep them current when something changes |
+| `exploration/` | Dated data checks for the team: figures, small results, scripts (may use non-NASA data; not the product) |
 
 If you need something in another part to change, write it in [docs/TASKS.md](docs/TASKS.md) under "Requests".
 
@@ -34,6 +35,8 @@ If you need something in another part to change, write it in [docs/TASKS.md](doc
 5. **Never commit large data or secrets.** Keep every committed file well under 50 MB. No Earthdata / API
    credentials in code (use `~/.netrc` or env vars).
 6. **Never disable TLS verification.**
+6b. **Product data = NASA/USGS only** (Landsat, MODIS, GPM, SMAP, POWER, NASADEM, ECOSTRESS, GRACE). Sentinel-2,
+   WorldCover, EFFIS only in `exploration/`. Download small (windows/subsets), list scenes used, delete raw imagery.
 7. Times in **UTC** (daily data: calendar dates). Coordinates **WGS84 lon/lat** (EPSG:4326) unless a file says otherwise.
 8. Small commits with clear messages.
 

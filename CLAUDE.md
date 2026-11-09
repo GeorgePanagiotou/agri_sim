@@ -35,7 +35,7 @@ If you need something in another part to change, write it in [docs/TASKS.md](doc
 5. **Never commit large data or secrets.** Keep every committed file well under 50 MB. No Earthdata / API
    credentials in code (use `~/.netrc` or env vars).
 6. **Never disable TLS verification.**
-6b. **Product data = NASA/USGS only** (Landsat, MODIS, GPM, SMAP, POWER, NASADEM, ECOSTRESS, GRACE). Sentinel-2,
+6b. **Product data = NASA/USGS only** (Landsat, MODIS, GPM, SMAP, POWER, NASADEM, ECOSTRESS, GRACE), plus supporting SoilGrids + FAO tables. Sentinel-2,
    WorldCover, EFFIS only in `exploration/`. Download small (windows/subsets), list scenes used, delete raw imagery.
 7. Times in **UTC** (daily data: calendar dates). Coordinates **WGS84 lon/lat** (EPSG:4326) unless a file says otherwise.
 8. Small commits with clear messages.

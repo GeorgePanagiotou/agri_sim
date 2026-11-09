@@ -48,8 +48,13 @@ and 250 m soil. The app must say so.
 | `data/processed/imagery/` | **done** · small Landsat true-colour GeoTIFF + PNG for 1987, Jul 2021, Aug 2021, Apr 2022, Jun 2025 · `data_prep/landsat_rgb.py` | data |
 | `data/processed/imerg_vs_power_october.csv` | **done** · October rain 2000–2024, GPM IMERG monthly (mean / wettest cell) vs POWER | data |
 
-**Rule (2026-11-09): the product uses NASA / USGS data only** (Landsat, MODIS, GPM, SMAP, POWER, NASADEM, …).
-Sentinel-2, WorldCover and EFFIS were used only in early exploration (`../notes/`), not in `data/processed/`.
+| `data/processed/soil_30m.tif` + `soil_summary.csv` | **done** · SoilGrids 2.0 (supporting) 0–30 cm clay/sand/silt %, SOC g/kg, bulk density, stones %, pH, N; AWC 0–30 / 0–100 cm (Saxton & Rawls 2006); RUSLE K (Williams/EPIC) · `data_prep/soil_soilgrids.py` (~4 min, window reads) | data |
+| `data/reference/crops.csv` | **draft** · 17 crops: FAO-56 stage lengths (T11), Kc (T12), root depth & p (T22), N-fixing, forage & bee value; each value has a status (fao56 / fao56_group / analog / team_estimate) · see `data/reference/SOURCES.md` | engine |
+| `data/reference/rotations.csv` | **draft** · strategies A (current, from Landsat), B legume forage, C bee & soil, D low water, for rainfed fields | engine |
+
+**Rule (2026-11-09): imagery and observations in the product are NASA / USGS only** (Landsat, MODIS, GPM, SMAP,
+POWER, NASADEM, …). **Supporting data allowed: SoilGrids (soil) and FAO tables (crops).** Sentinel-2, WorldCover and
+EFFIS were used only in exploration (`exploration/2026-11-09_area_search/`), not in `data/processed/`.
 | `data/processed/climate_daily.parquet` | per demo point: date, tmax, tmin, precip, et0, … | data |
 | `data/processed/grid_30m.nc` | AOI grid: elevation, slope, LS, NDVI stats, soil | data |
 | `data/reference/crops.csv` | crop, Kc stages, season, N-fixing, root depth, cover by month, sources | engine |

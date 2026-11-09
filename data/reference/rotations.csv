@@ -1,0 +1,19 @@
+strategy_id,name,year,crop_id,catch_crop_id,notes
+A,Current (from Landsat history),1,winter_wheat,,"Landsat 1985-2025: rainfed fields mostly cereal, fallow ~17-18 % of field-years in multi-year spells; exact crops to confirm locally"
+A,Current (from Landsat history),2,barley,,
+A,Current (from Landsat history),3,winter_wheat,,
+A,Current (from Landsat history),4,barley,,
+A,Current (from Landsat history),5,fallow_grazed,,
+B,Legume forage,1,winter_wheat,,"N-fixing, autumn-winter cover, feed for goats/sheep"
+B,Legume forage,2,vetch_oat,,
+B,Legume forage,3,barley,,
+B,Legume forage,4,chickpea,,
+C,Bee & soil,1,winter_wheat,phacelia,"phacelia catch crop sown after harvest with the first autumn rain; sainfoin perennial 3 years; aromatic strips on field edges steeper than ~8 deg"
+C,Bee & soil,2,sainfoin,,
+C,Bee & soil,3,sainfoin,,
+C,Bee & soil,4,sainfoin,,
+C,Bee & soil,5,barley,,
+D,Low water,1,barley,,"early sowing, short-season legumes, less water than wheat"
+D,Low water,2,lentil,,
+D,Low water,3,barley,,
+D,Low water,4,chickpea,,

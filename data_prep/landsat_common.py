@@ -4,7 +4,7 @@ Collection 2 Level-2 COGs on Microsoft Planetary Computer (public, anonymous SAS
 import os
 
 os.environ.setdefault("GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR")
-os.environ.setdefault("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ".TIF,.tif")
+os.environ.setdefault("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ".TIF,.tif,.vrt")  # .vrt: SoilGrids
 os.environ.setdefault("GDAL_HTTP_MAX_RETRY", "4")
 os.environ.setdefault("GDAL_HTTP_RETRY_DELAY", "2")
 

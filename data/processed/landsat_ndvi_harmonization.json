@@ -1,0 +1,222 @@
+{
+ "offset_to_landsat8": {
+  "landsat-8": 0.0,
+  "landsat-7": 0.0296,
+  "landsat-9": -0.0033,
+  "landsat-5": 0.0524,
+  "landsat-4": 0.0524
+ },
+ "fits": {
+  "landsat-7": {
+   "reference": "landsat-8",
+   "a": 0.1858,
+   "b": 0.7778,
+   "pixels": 240000,
+   "pairs": [
+    {
+     "sensor": "LE07_L2SP_183033_20130422_02_T1",
+     "reference": "LC08_L2SP_183033_20130430_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20130711_02_T1",
+     "reference": "LC08_L2SP_183033_20130703_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20131031_02_T1",
+     "reference": "LC08_L2SP_183033_20131023_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20140612_02_T1",
+     "reference": "LC08_L2SP_183033_20140620_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20140831_02_T1",
+     "reference": "LC08_L2SP_183033_20140823_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20150514_02_T1",
+     "reference": "LC08_L2SP_183033_20150506_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20150818_02_T1",
+     "reference": "LC08_L2SP_183033_20150826_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20151122_02_T1",
+     "reference": "LC08_L2SP_183033_20151114_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20160703_02_T1",
+     "reference": "LC08_L2SP_183033_20160711_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20160905_02_T1",
+     "reference": "LC08_L2SP_183033_20160828_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20170401_02_T1",
+     "reference": "LC08_L2SP_183033_20170324_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LE07_L2SP_183033_20170706_02_T1",
+     "reference": "LC08_L2SP_183033_20170628_02_T1",
+     "days_apart": 8
+    }
+   ],
+   "median_diff_ref_minus_sensor": 0.0296,
+   "r": 0.805
+  },
+  "landsat-5": {
+   "reference": "landsat-7",
+   "a": 0.0266,
+   "b": 1.0167,
+   "pixels": 240000,
+   "pairs": [
+    {
+     "sensor": "LT05_L2SP_183033_19990627_02_T1",
+     "reference": "LE07_L2SP_183033_19990705_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_19991001_02_T1",
+     "reference": "LE07_L2SP_183033_19990923_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20000613_02_T1",
+     "reference": "LE07_L2SP_183033_20000605_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20010531_02_T1",
+     "reference": "LE07_L2SP_183033_20010608_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20011006_02_T1",
+     "reference": "LE07_L2SP_183033_20011014_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20030809_02_T1",
+     "reference": "LE07_L2SP_183033_20030817_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20040608_02_T1",
+     "reference": "LE07_L2SP_183033_20040531_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20050424_02_T2",
+     "reference": "LE07_L2SP_183033_20050416_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20060630_02_T1",
+     "reference": "LE07_L2SP_183033_20060622_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20070209_02_T1",
+     "reference": "LE07_L2SP_183033_20070201_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20070820_02_T1",
+     "reference": "LE07_L2SP_183033_20070828_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LT05_L2SP_183033_20080806_02_T1",
+     "reference": "LE07_L2SP_183033_20080729_02_T1",
+     "days_apart": 8
+    }
+   ],
+   "median_diff_ref_minus_sensor": 0.0228,
+   "r": 0.935
+  },
+  "landsat-9": {
+   "reference": "landsat-8",
+   "a": -0.0026,
+   "b": 0.9767,
+   "pixels": 240000,
+   "pairs": [
+    {
+     "sensor": "LC09_L2SP_183033_20211208_02_T1",
+     "reference": "LC08_L2SP_183033_20211130_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20220501_02_T1",
+     "reference": "LC08_L2SP_183033_20220423_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20220618_02_T1",
+     "reference": "LC08_L2SP_183033_20220626_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20220720_02_T1",
+     "reference": "LC08_L2SP_183033_20220728_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20221227_02_T1",
+     "reference": "LC08_L2SP_183033_20230104_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20230723_02_T1",
+     "reference": "LC08_L2SP_183033_20230715_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20230824_02_T1",
+     "reference": "LC08_L2SP_183033_20230816_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20240404_02_T1",
+     "reference": "LC08_L2SP_183033_20240327_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20240522_02_T1",
+     "reference": "LC08_L2SP_183033_20240530_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20240623_02_T1",
+     "reference": "LC08_L2SP_183033_20240615_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20240725_02_T1",
+     "reference": "LC08_L2SP_183033_20240717_02_T1",
+     "days_apart": 8
+    },
+    {
+     "sensor": "LC09_L2SP_183033_20240826_02_T1",
+     "reference": "LC08_L2SP_183033_20240818_02_T1",
+     "days_apart": 8
+    }
+   ],
+   "median_diff_ref_minus_sensor": -0.0033,
+   "r": 0.789
+  }
+ },
+ "method": "median NDVI difference on clear pixels of near-same-day pairs (<= 8 days), study area; ndvi_l8 = ndvi_sensor + offset. RMA fits recorded but not used."
+}

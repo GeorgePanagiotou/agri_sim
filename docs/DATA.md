@@ -38,6 +38,14 @@ and 250 m soil. The app must say so.
 | `data/processed/power_hourly_2021-10.parquet` | **done** · POWER hourly Oct 2021 (storm Athena): PRECTOTCORR, T2M, WS2M | data |
 | `data/processed/landsat_ndvi_monthly_30m.nc` | **done, local only (130 MB, git-ignored)** · monthly median Landsat C2 L2 NDVI 1984–2025, study area, 30 m UTM 34N, uint8 (`ndvi = (v-1)/200 - 0.25`, 0 = no data) + `nobs` · `data_prep/landsat_ndvi_history.py` (~15 min, window reads only) | data |
 | `data/processed/landsat_scenes.csv` | **done** · every Landsat scene used (id, date, platform, WRS path/row, cloud cover, valid share) | data |
+| `data/processed/landsat_ndvi_harmonization.json` | **done** · NDVI offsets to Landsat 8 from near-same-day pairs: L5/L4 +0.052, L7 +0.030, L9 −0.003 (applied in the cube) · `data_prep/landsat_harmonize.py` | data |
+| `data/processed/landsat_dnbr_2021_30m.tif` + `landsat_burn_scenes.csv` | **done** · Landsat 8/9 dNBR of the 2021 fire (3 pre + 3 post scenes) · `data_prep/landsat_burn_2021.py` | data |
+| `data/processed/landsat_field_map_30m.tif` | **done** · band 1 land use 2013–2020, band 2 land use 1985–1995 (0 water/none, 1 rainfed field, 2 irrigated summer field, 3 woody, 4 herbaceous/shrub = grazing, 5 bare/built), band 3 burn 2021 (0–4) · water from Landsat QA · `data_prep/landsat_field_map.py` | data |
+| `data/processed/landsat_field_years.nc` / `.csv` | **done** · per field pixel and agricultural year (Oct–Sep): 1 crop, 2 fallow/low, 3 summer crop, 9 no data; spring peak NDVI · yearly shares burned vs unburned | data |
+| `data/processed/imerg_vs_power_october.csv` | **done** · October rain 2000–2024, GPM IMERG monthly (mean / wettest cell) vs POWER | data |
+
+**Rule (2026-11-09): the product uses NASA / USGS data only** (Landsat, MODIS, GPM, SMAP, POWER, NASADEM, …).
+Sentinel-2, WorldCover and EFFIS were used only in early exploration (`../notes/`), not in `data/processed/`.
 | `data/processed/climate_daily.parquet` | per demo point: date, tmax, tmin, precip, et0, … | data |
 | `data/processed/grid_30m.nc` | AOI grid: elevation, slope, LS, NDVI stats, soil | data |
 | `data/reference/crops.csv` | crop, Kc stages, season, N-fixing, root depth, cover by month, sources | engine |

@@ -29,10 +29,11 @@ coming from upslope is larger than before 2021. **A rotation that keeps the soil
 melliferous cover crop, a perennial strip on slopes) cuts the erosion risk exactly when it peaks. It can also feed the
 animals, fix nitrogen and give the beekeepers back some forage.
 
-First evidence (2026-11-09, NASA POWER at the study-area cell): **October 2021 had 327 mm, the wettest October since
-1981** (median 38 mm), and **8–11 Oct 2021 brought 225 mm, the largest 4-day total in the record**: storm "Athena",
-two months after the fire, flooded Agia Anna, Achladi and Kotsikia. Oct–Dec are the wettest months in the 1991–2020
-normals. Still to check: GPM IMERG (finer, needs Earthdata login), station data, bare months from NDVI.
+Evidence (2026-11-09): **GPM IMERG: October 2021 = 147 mm over the study area, about 3× the 2000–2024 median
+(50 mm) and the 2nd-wettest October since 2000**; storm "Athena" (8–12 Oct) flooded Agia Anna, Achladi and Kotsikia
+two months after the fire. Oct–Dec are the wettest months (POWER 1991–2020 normals). **Do not use POWER's "record
+327 mm / 225 mm in 4 days"**: POWER usually reads below IMERG here but doubles it in Oct 2021, so it is an outlier
+(`data/processed/imerg_vs_power_october.csv`). Station data (meteo.gr / NOA) would settle the exact totals.
 
 ## The rotations we compare (at least 3, the brief requires the current one)
 

@@ -11,6 +11,7 @@ Outputs
 
     ..\\.venv\\Scripts\\python.exe data_prep\\landsat_ndvi_history.py [first_year] [last_year]
 """
+import json
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -66,6 +67,7 @@ def scene_ndvi(item):
     ok = ((qa & BAD) == 0) & (qa != 0) & (red > 0) & (nir > 0)
     with np.errstate(invalid="ignore", divide="ignore"):
         ndvi = np.where(ok, (nir - red) / (nir + red), np.nan).astype("float32")
+    ndvi += OFFSET.get(item.properties.get("platform"), 0.0)  # harmonize to Landsat 8 (landsat_harmonize.py)
     return item, ndvi, None
 
 
@@ -74,6 +76,9 @@ def encode(ndvi):
     return np.where(np.isfinite(ndvi), v, 0).astype("uint8")
 
 
+HARM = PROC / "landsat_ndvi_harmonization.json"
+OFFSET = json.load(open(HARM))["offset_to_landsat8"] if HARM.exists() else {}
+print("NDVI offsets to Landsat 8:", OFFSET or "none (run landsat_harmonize.py first)")
 catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
 rows = pd.read_csv(SCENES_CSV).to_dict("records") if SCENES_CSV.exists() else []
 rows = [r for r in rows if not (FIRST <= int(str(r["date"])[:4]) <= LAST)]  # redo the years in this run's range
@@ -125,7 +130,7 @@ x = X0 + RES * (np.arange(WIDTH) + 0.5)
 y = Y1 - RES * (np.arange(HEIGHT) + 0.5)
 ds = xr.Dataset({"ndvi": (("time", "y", "x"), ndvi), "nobs": (("time", "y", "x"), nobs)},
                 coords={"time": time, "y": y, "x": x})
-ds["ndvi"].attrs = {"long_name": "monthly median Landsat NDVI", "encoding": "ndvi = (v - 1) / 200 - 0.25; 0 = no data"}
+ds["ndvi"].attrs = {"long_name": "monthly median Landsat NDVI, harmonized to Landsat 8 (offsets in landsat_ndvi_harmonization.json)", "encoding": "ndvi = (v - 1) / 200 - 0.25; 0 = no data"}
 ds["nobs"].attrs = {"long_name": "clear Landsat observations in the month"}
 ds.attrs = {"crs": CRS, "resolution_m": RES, "source": "Landsat Collection 2 Level-2 (USGS/NASA) via Microsoft "
             "Planetary Computer", "area": f"study area {STUDY_AREA}"}

@@ -1,0 +1,17 @@
+requests
+truststore
+earthaccess
+xarray
+netCDF4
+h5netcdf
+rioxarray
+rasterio
+numpy
+scipy
+pandas
+pyarrow
+geopandas
+streamlit
+plotly
+folium
+streamlit-folium

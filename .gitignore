@@ -1,0 +1,24 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Data: raw downloads are large and shared separately (see docs/DATA.md)
+data/raw/
+# Big processed files stay local; add specific names here as they appear
+data/processed/**/*_full.*
+*.tif.aux.xml
+
+# Secrets
+.env
+.netrc
+_netrc
+.streamlit/secrets.toml
+*credentials*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

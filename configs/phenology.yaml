@@ -1,0 +1,7 @@
+method: pelt
+savgol_window_days: 15
+max_gap_days: 40
+min_observations: 6
+min_side: 2
+pelt_penalty: 3.0
+warning: PELT is only a change-point proposal, never an independently verified crop emergence date.

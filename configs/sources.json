@@ -1,0 +1,101 @@
+{
+  "challenge": "NASA Space Apps Challenge 2026 — Field Shift: Adapting Farms with NASA Data",
+  "challenge_url": "https://www.spaceappschallenge.org/2026/challenges/adapting-farms-with-nasa-data/?tab=resources",
+  "restriction": "Data sources limited to explicitly user-supplied NASA Space Apps 2026 challenge resources; data mirrors identified separately; derived indices are computations on permitted satellite data.",
+  "selected_datasets": [
+    {
+      "name": "NASA HLSL30 v2.0 (Landsat)",
+      "resource_category": "Landsat and MODIS/VIIRS reflectance, NDVI and vegetation indices",
+      "script": "data_prep/download_evia_hls.py",
+      "official_dataset": "https://doi.org/10.5067/HLS/HLSL30.002",
+      "data_service": "NASA CMR validates Planetary Computer HLS mirror granules",
+      "approx_resolution": "30 m"
+    },
+    {
+      "name": "NASA Landsat Collection 2 Level-2 Surface Reflectance",
+      "resource_category": "Landsat and MODIS/VIIRS reflectance, NDVI and vegetation indices",
+      "script": "data_prep/landsat_ndvi_history.py",
+      "official_dataset": "https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-reflectance",
+      "data_service": "Planetary Computer mirror (USGS Landsat C2 L2)",
+      "approx_resolution": "30 m"
+    },
+    {
+      "name": "NASA SMAP L4 SPL4SMGP v008",
+      "resource_category": "SMAP",
+      "script": "data_prep/download_evia_smap.py",
+      "official_dataset": "https://nsidc.org/data/spl4smgp/versions/8",
+      "data_service": "NASA CMR + Earthdata OPeNDAP",
+      "approx_resolution": "9 km"
+    },
+    {
+      "name": "NASA GPM IMERG Final v07",
+      "resource_category": "GPM / IMERG",
+      "script": "data_prep/download_imerg_daily.py",
+      "official_dataset": "https://gpm.nasa.gov/data/imerg",
+      "data_service": "NASA GES DISC OPeNDAP",
+      "approx_resolution": "0.1 degree (~10 km)"
+    },
+    {
+      "name": "NASA POWER Agroclimatology",
+      "resource_category": "NASA POWER",
+      "script": "data_prep/download_power.py",
+      "official_dataset": "https://power.larc.nasa.gov/",
+      "data_service": "NASA POWER REST API",
+      "approx_resolution": "Regional meteorological grid"
+    },
+    {
+      "name": "NASA MODIS MOD13Q1, MOD16A2GF, MOD11A2",
+      "resource_category": "Landsat and MODIS/VIIRS",
+      "script": "data_prep/download_appeears.py",
+      "official_dataset": "https://appeears.earthdatacloud.nasa.gov/",
+      "data_service": "NASA AppEEARS area subset",
+      "approx_resolution": "250 m, 500 m and 1 km"
+    },
+    {
+      "name": "NASA ECOSTRESS ECO_L3T_JET",
+      "resource_category": "ECOSTRESS",
+      "script": "data_prep/download_appeears.py",
+      "official_dataset": "https://ecostress.jpl.nasa.gov/",
+      "data_service": "NASA AppEEARS area subset",
+      "approx_resolution": "~70 m"
+    },
+    {
+      "name": "NASA SRTMGL1 v003",
+      "resource_category": "Shuttle Radar Topography Mission SRTM",
+      "script": "data_prep/download_srtm.py",
+      "official_dataset": "https://doi.org/10.5067/MEaSUREs/SRTM/SRTMGL1.003",
+      "data_service": "NASA Earthdata",
+      "approx_resolution": "1 arcsecond (~30 m)"
+    },
+    {
+      "name": "ESA Sentinel-2 L2A",
+      "resource_category": "Copernicus Sentinel-2 ESA",
+      "script": "data_prep/download_sentinel2.py",
+      "official_dataset": "https://dataspace.copernicus.eu/",
+      "data_service": "Official Copernicus Data Space Sentinel Hub Process API",
+      "approx_resolution": "10 m requested; scene mosaics possible"
+    },
+    {
+      "name": "ESA/ECMWF ERA5-Land",
+      "resource_category": "ERA5 ECMWF Reanalysis ESA partner",
+      "script": "data_prep/download_era5_land.py",
+      "official_dataset": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land",
+      "data_service": "Official Copernicus Climate Data Store CDS API",
+      "approx_resolution": "~9 km"
+    },
+    {
+      "name": "FAO Global Agro-Ecological Zones (GAEZ)",
+      "resource_category": "FAO GAEZ",
+      "script": "data_prep/download_fao_gaez.py",
+      "official_dataset": "https://gaez.fao.org/",
+      "data_service": "FAO official GAEZ GeoTIFF download chosen by user",
+      "approx_resolution": "typically 5 arc-min (~9 km), layer-dependent"
+    }
+  ],
+  "intentionally_excluded": [
+    "ISRIC SoilGrids (not one of the explicitly supplied resource links)",
+    "NASA GRACE / GRACE-FO (not included in supplied challenge list)",
+    "US-specific USDA, PRISM, WSS, CDL, NLCD and NAIP sources (not suitable for a North Evia case study)",
+    "MobileNetV3, YOLO and other satellite-image classification model training: replaced with time-series phenology and tabular ML requiring independent outcomes"
+  ]
+}

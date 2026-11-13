@@ -1,0 +1,7 @@
+validation_group: farm_id
+minimum_unique_farms_for_pilot: 4
+required_label_provenance: independently_observed
+success_label_column: established_successfully
+emergence_days_column: days_to_emergence
+model_family: histogram_gradient_boosting
+no_unverified_probability_claims: true

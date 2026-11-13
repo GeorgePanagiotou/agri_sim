@@ -1,0 +1,4 @@
+strategy_id,rotation,candidate_crop,soil_cover_score,water_efficiency_score,feed_score,bee_foraging_score,market_score,notes
+A,wheat>barley>wheat>barley>fallow,wheat,,,,,,Farmer must confirm and score 0-5
+B,wheat>vetch-oat>barley>chickpea,vetch-oat,,,,,,Candidate only; local agronomy review required
+D,barley>lentil>barley>chickpea,lentil,,,,,,Candidate only; local agronomy review required

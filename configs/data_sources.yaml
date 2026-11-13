@@ -1,0 +1,8 @@
+# Strict product allowlist from NASA Space Apps 2026 Field Shift Resources tab.
+# Mirrors can be used for the SAME named product if provenance is preserved.
+allowed_products:
+  nasa: [HLSL30, HLSS30, Landsat, SMAP, GPM_IMERG, POWER, MODIS, VIIRS, ECOSTRESS, SRTM, GLDAS, NLDAS, GEDI]
+  esa_ecmwf: [Sentinel-2, ERA5-Land, ERA5]
+  fao: [GAEZ]
+  usda_usgs: [Cropland_Data_Layer, Web_Soil_Survey, SSURGO, STATSGO2, NAIP, NLCD]
+excluded_unless_approved_elsewhere: [ISRIC_SoilGrids, GRACE, EFFIS]

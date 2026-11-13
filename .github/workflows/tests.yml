@@ -1,0 +1,16 @@
+name: Python checks
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install testing dependencies without optional GPU packages
+        run: uv sync --group dev
+      - name: Run tests
+        run: uv run pytest -q
+      - name: Compile modules
+        run: uv run python -m compileall -q src app scripts

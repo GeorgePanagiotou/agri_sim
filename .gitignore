@@ -1,27 +1,35 @@
-# Python
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
 .ipynb_checkpoints/
-
-# Data: raw downloads are large and shared separately (see docs/DATA.md)
-data/raw/
-# Big processed files stay local; add specific names here as they appear
-data/processed/**/*_full.*
-*.tif.aux.xml
-
-# Secrets
 .env
-.netrc
-_netrc
-.streamlit/secrets.toml
-*credentials*
-
-# OS / editor
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
-# Landsat NDVI cube (~150 MB): local only, rebuild with data_prep/landsat_ndvi_history.py
-data/processed/landsat_ndvi_monthly_30m.nc
+.env.*
+!.env.example
+*_netrc
+*.partial*
+*.part
+*.log
+/data/raw/**
+/data/interim/**
+/data/processed/**
+/data/samples/**
+/outputs/**
+/models/checkpoints/**
+!/data/raw/.gitkeep
+!/data/interim/.gitkeep
+!/data/processed/.gitkeep
+!/data/samples/.gitkeep
+!/outputs/.gitkeep
+!/models/checkpoints/.gitkeep
+# some rasters and NetCDF files are too large for Git
+*.tif
+*.tiff
+*.nc
+*.h5
+*.hdf
+*.parquet
+*.pt
+*.pth
+*.joblib

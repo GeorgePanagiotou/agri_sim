@@ -1,0 +1,6 @@
+observation_cutoff: completed_days_only
+no_future_data_leakage: true
+precipitation_rolling_days: [7, 14, 30]
+temperature_base_c: 5.0
+minimum_valid_pixels_per_observation: 4
+minimum_clear_fraction: 0.6

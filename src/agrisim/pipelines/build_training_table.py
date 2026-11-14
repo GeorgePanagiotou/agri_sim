@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -72,11 +73,15 @@ def static_layers(px: pd.DataFrame, proc: Path) -> pd.DataFrame:
             data = ds.read()
             for i, desc in enumerate(ds.descriptions):
                 out[prefix + desc] = data[i][px.row, px.col].astype("float32")
-    with rasterio.open(proc / "landsat_dnbr_2021_30m.tif") as ds:
-        dnbr = ds.read(1).astype("float32")
-        if ds.nodata is not None:
-            dnbr[dnbr == ds.nodata] = np.nan
-    out["burn_dnbr_2021"] = dnbr[px.row, px.col]
+    dnbr_path = proc / "landsat_dnbr_2021_30m.tif"
+    if dnbr_path.exists():
+        with rasterio.open(dnbr_path) as ds:
+            dnbr = ds.read(1).astype("float32")
+            if ds.nodata is not None:
+                dnbr[dnbr == ds.nodata] = np.nan
+        out["burn_dnbr_2021"] = dnbr[px.row, px.col]
+    else:  # area without a mapped fire
+        out["burn_dnbr_2021"] = np.nan
     return out
 
 
@@ -104,6 +109,59 @@ def rain_features(table: pd.DataFrame, d: pd.Timestamp) -> dict[str, np.ndarray]
     summer = season_start.year
     feats["rain_prev_summer_jja_mm"] = total(pd.Timestamp(f"{summer}-06-01"), pd.Timestamp(f"{summer}-08-31"))
     return feats
+
+
+class ModisFeatures:
+    """Optional field-varying weather from MODIS (LST 1 km, ET 500 m), nearest cell per pixel.
+
+    An 8-day composite counts only when it has ended before the decision date. Rates (degC, mm/day) avoid
+    completeness problems of sums. Skipped (no columns) when the files are not in data/processed.
+    """
+
+    def __init__(self, px: pd.DataFrame, proc: Path):
+        self.grids = {}
+        for name, path, vars_ in (("lst", proc / "modis_lst_8day_1km.nc", ("lst_day", "lst_night")),
+                                  ("et", proc / "modis_et_8day_500m.nc", ("et", "pet", "days"))):
+            if not path.exists():
+                continue
+            with xr.open_dataset(path) as ds:
+                lat_i = np.abs(ds.lat.values[:, None] - px.lat.to_numpy()[None, :]).argmin(axis=0)
+                lon_i = np.abs(ds.lon.values[:, None] - px.lon.to_numpy()[None, :]).argmin(axis=0)
+                time = pd.DatetimeIndex(ds.time.values)
+                data = {v: ds[v].values.astype("float32") for v in vars_}
+            self.grids[name] = (time, data, lat_i, lon_i)
+
+    def _mean(self, name, var, start, end, per_day=False):
+        time, data, li, lo = self.grids[name]
+        sel = (time >= start) & (time + pd.Timedelta(days=8) <= end)
+        if not sel.any():
+            return np.full(len(li), np.nan)
+        block = data[var][sel]
+        if per_day:
+            days = data["days"][sel]
+            block = block / (days.reshape(-1, *([1] * (block.ndim - 1))) if days.ndim == 1 else days)
+        with np.errstate(all="ignore"), warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)   # all-NaN cells -> NaN
+            return np.nanmean(block, axis=0)[li, lo]
+
+    def features(self, d: pd.Timestamp) -> dict[str, np.ndarray]:
+        if not self.grids:
+            return {}
+        season_start = pd.Timestamp(f"{d.year if d.month >= 9 else d.year - 1}-09-01")
+        s0, s1 = pd.Timestamp(f"{season_start.year}-06-01"), pd.Timestamp(f"{season_start.year}-09-01")
+        out = {}
+        if "lst" in self.grids:
+            out["modis_lst_day_prev_summer_c"] = self._mean("lst", "lst_day", s0, s1)
+            out["modis_lst_day_since_sep1_c"] = self._mean("lst", "lst_day", season_start, d)
+            out["modis_lst_night_since_sep1_c"] = self._mean("lst", "lst_night", season_start, d)
+        if "et" in self.grids:
+            out["modis_et_prev_summer_mm_day"] = self._mean("et", "et", s0, s1, per_day=True)
+            et = self._mean("et", "et", season_start, d, per_day=True)
+            pet = self._mean("et", "pet", season_start, d, per_day=True)
+            out["modis_et_since_sep1_mm_day"] = et
+            with np.errstate(all="ignore"):
+                out["modis_et_pet_ratio_since_sep1"] = np.where(pet > 0, et / pet, np.nan)
+        return out
 
 
 def regional_features(data: pd.DataFrame, ind: pd.DataFrame, lev: pd.DataFrame, d: pd.Timestamp) -> dict:
@@ -150,6 +208,7 @@ def build(first_season: int = 2002, last_season: int = 2025, as_of: str = "12-01
     cube_path = proc / "landsat_ndvi_monthly_30m.nc"
     cube = xr.open_dataset(cube_path) if cube_path.exists() else None
     table, cell_idx, _ = imerg_cells(px, proc)
+    modis = ModisFeatures(px, proc)
 
     risk_rules = er.load_rules()
     data = er.load_inputs()
@@ -189,6 +248,8 @@ def build(first_season: int = 2002, last_season: int = 2025, as_of: str = "12-01
                                                    if sel.sizes["time"] else np.nan)
         for k, v in rain_features(table, d).items():
             f[k] = v[cell_idx]
+        for k, v in modis.features(d).items():
+            f[k] = v
         for k, v in {**regional_features(data, ind, lev, d), **sowing_features(judged, season, d)}.items():
             f[k] = v
         f["post_fire"] = float(season >= 2022)

@@ -31,6 +31,7 @@ records"*.
 |---|---|---|
 | Rotation history | `hist_class_lag1..3`, `hist_peak_lag1..2`, `hist_crop_share_5y`, `hist_peak_mean_5y`, `hist_years_since_fallow` | pixel × season |
 | Autumn NDVI | `ndvi_prior_sep`, `ndvi_prior_oct`, `ndvi_prior_nov` (months completed before the date) | pixel × season |
+| MODIS, nearest cell (optional) | `modis_lst_day_prev_summer_c`, `modis_lst_day_since_sep1_c`, `modis_lst_night_since_sep1_c` (MOD11A2, 1 km); `modis_et_prev_summer_mm_day`, `modis_et_since_sep1_mm_day`, `modis_et_pet_ratio_since_sep1` (MOD16A2GF, 500 m). An 8-day composite counts only once it ended before the date | cell × season (~170 values per season in Evia) |
 | Rain (IMERG 0.1° cell) | `rain_prior_30/60/90d_mm`, `rain_since_sep1_mm`, `rain_prev_summer_jja_mm` | cell × season |
 | Regional | `reg_rain_90d_percentile`, `reg_dry_spell_days`, `reg_drought_level`, `reg_heavy_rain_level`, `reg_temp_mean_since_sep1_c`, `reg_gdd0_since_sep1`, `reg_frost_days_since_sep1`, `reg_hot_days_prev_summer_ge35c` | season |
 | Sowing window | `sow_{winter_wheat,barley}_weeks_assessed / _weeks_check_worthy / _days_to_first_check_worthy` | season |
@@ -56,8 +57,19 @@ Group / ID columns, **not features**: `season`, `block_id` (50 × 50 px = 1.5 km
 - Autumn-NDVI columns need the local monthly cube (`landsat_ndvi_monthly_30m.nc`, 150 MB, not in git). Without it,
   the table is built without them.
 
-## Other areas (next step)
+## Other areas
 
-The script reads the 30 m grids in `data/processed/` (field map, field years, soil, terrain, burn) and the IMERG
-cells. For a user-selected area, the `data_prep/` chain must first build those grids for the new bounding box. That
-is tomorrow's "select an area" work.
+`python -m agrisim.pipelines.prepare_area --name <area> --bbox ...` builds every input and then this table for any
+box ([area_pipeline.md](area_pipeline.md)). Without a burn map, `burn_dnbr_2021` is NaN. The MODIS columns appear
+only where the MODIS files exist.
+
+## What the record says about rotation (Evia, 2002–2025, rainfed pixels)
+
+- **No measurable fallow benefit.** Spring peak NDVI after a fallow season vs after a crop, within the same pixel
+  and season: **−0.012** (SE 0.001). In crop seasons only: −0.004.
+- **Fallow persists.** After a fallow season, 43 % stay fallow (21 % after a crop). P(crop) rises with the years
+  since the last fallow, from 0.57 (1 year) to 0.94 (≥ 10 years).
+- **"Fallow" here is mostly multi-year idle or grazed land, not a managed one-year break.** The rotation engine
+  should not assume a yield bonus after fallow without local evidence.
+- **The 2021 fire did not reduce cropping.** The crop share per burn class is about the same before and after
+  2021, e.g. 70 % → 72 % on unburned fields.

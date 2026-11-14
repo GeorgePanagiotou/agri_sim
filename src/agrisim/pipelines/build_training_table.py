@@ -224,7 +224,9 @@ def build(first_season: int = 2002, last_season: int = 2025, as_of: str = "12-01
 
     risk_rules = er.load_rules()
     data = er.load_inputs()
-    ind = er.indicators(data, risk_rules)
+    # indicators for date t use data before t; one empty day after the last data day gives "as of today" values
+    nxt = pd.DatetimeIndex([data.index.max() + pd.Timedelta(days=1)])
+    ind = er.indicators(data.reindex(data.index.append(nxt)), risk_rules)
     lev = er.levels(ind, risk_rules)
     judged, *_ = sw.run(data)
 

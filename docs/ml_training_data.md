@@ -25,6 +25,11 @@ No farm records exist (sowing dates, emergence, yields). The targets come from o
 Say this in the app and the pitch: *"trained on satellite-observed field outcomes; not validated against farm
 records"*.
 
+**Labels are revised a little when a year is added.** Crop vs fallow uses a per-pixel threshold over all years, so
+adding season 2026 flipped about 1 % of earlier pixel-years between crop and fallow. Spring peaks did not change.
+Past `hist_class_*` values therefore use a threshold that saw later years. The effect is small, and the live
+prediction sees the same thing: the threshold over all years to date.
+
 ## Features (known at the decision date, default 1 Dec of Y-1)
 
 | Group | Columns | Varies by |
@@ -98,10 +103,21 @@ python -m agrisim.pipelines.build_training_table --predict-season 2027 --as-of 1
 ```
 
 This writes `data/processed/ml/predict_2027_1114.parquet`: one row per field pixel with the same feature columns
-and empty targets. Season 2027 runs Oct 2026 … Sep 2027. It needs:
+and empty targets. Season 2027 runs Oct 2026 … Sep 2027. **Built 2026-11-14 for Evia** (4,911 pixels):
+
+- Last season (2026): 74 % crop, 25 % fallow, 1 % summer crop. Mean `hist_peak_lag1` is 0.71.
+- Autumn 2026 is very wet:
+  - 426 mm since 1 Sep and 174 mm in the last 30 days.
+  - `reg_rain_90d_percentile` 100, drought level 0.
+  - Winter wheat has had 2 check-worthy sowing weeks so far, the first at the start of the window.
+
+It needs:
 
 - **Last season's class and peak (2026):** the Landsat cube must reach Sep 2026 (`landsat_ndvi_history.py 2026
   2026`, then `landsat_field_map.py`).
+- **MODIS columns are empty for the live season.** The local MODIS files end on 2025-12-27. Since MODIS adds no
+  skill (see above), **leave the `modis_*` columns out of the production model** rather than train on them and
+  predict with NaN.
 - **Recent rain:** IMERG Final ends about 3.5 months back. `data_prep/download_imerg_late.py` fills the gap up to
   yesterday with the IMERG Late Run (`raw/imerg_late/<year>_Q<n>.parquet`). `rain_includes_imerg_late` = 1 marks
   rows whose 90-day window uses Late days. The risk and sowing engines read the Late quarters too, and Final wins

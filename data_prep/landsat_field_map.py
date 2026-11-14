@@ -8,8 +8,10 @@ Per agricultural year (Oct of the year before .. Sep), per 30 m pixel:
 Land use for a period = what most of its years look like (fields: annual-like or summer-green in >= 50 % of years).
 
 Crop vs. fallow per year, for field pixels: each pixel gets its OWN threshold between its good and poor years
-(2-means on its spring peaks 1985-2025). A pixel with < 0.12 between the two groups has no clear fallow years.
-Per-pixel thresholds make the result robust to the small NDVI offsets between Landsat 5/7/8/9.
+(2-means on its spring peaks over all years in the cube). A pixel with < 0.12 between the two groups has no clear
+fallow years. Per-pixel thresholds make the result robust to the small NDVI offsets between Landsat 5/7/8/9.
+Because the threshold uses every year, adding a year can flip borderline years: adding 2026 changed crop/fallow in
+about 1 % of field pixel-years (spring_peak unchanged).
 
 Outputs (data/processed):
   landsat_field_map_30m.tif   band 1 land use 2013-2020, band 2 land use 1985-1995, band 3 burn 2021 (dNBR class)

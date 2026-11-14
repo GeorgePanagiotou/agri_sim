@@ -2,6 +2,21 @@
 import numpy as np
 import pandas as pd
 
+
+def add_rainfall_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Calculate historical rainfall without future data leakage."""
+    df = df.copy().sort_index()
+
+    for window in [7, 14, 30]:
+        df[f"rainfall_prev_{window}d_mm"] = (
+            df["PRECTOTCORR"]
+            .shift(1)
+            .rolling(window, min_periods=window)
+            .sum()
+        )
+
+    return df
+
 def growing_degree_days(temp_c, base_c=5.0, upper_c=None):
     t=np.asarray(temp_c,dtype=float)
     if upper_c is not None: t=np.minimum(t,upper_c)

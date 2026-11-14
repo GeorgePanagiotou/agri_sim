@@ -1,48 +1,105 @@
-"""Optional ECOSTRESS ET point-sampling of NASA AppEEARS GeoTIFF granules.
+"""Extract raw ECOSTRESS JET ETdaily overpasses for the provisional HLS sample.
 
-This uses overpass dates encoded in NASA filenames, no temporal interpolation.
-The result is a sampled point (not an agricultural parcel mean), and no field-
-scale labels. Use only ECO_L3T_JET files actually downloaded via AppEEARS.
+NASA AppEEARS ETdaily Collection 2 GeoTIFFs downloaded for the pilot currently
+advertise `W/m²` in their metadata. Preserve that value, explicitly unconverted:
+NASA documentation uses inconsistent descriptions for ETdaily and the request
+contains no separate cloud QA layer. Do NOT call these values mm/day or use
+as a validated crop ET time series.
+
+    uv run python -m agrisim.features.ecostress
 """
+from __future__ import annotations
+
 import argparse
 import re
+from datetime import datetime, timezone
 from pathlib import Path
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import rasterio
-from pyproj import Transformer
-from agrisim.config import REPO as ROOT
+from rasterio.features import geometry_mask, shapes
+from rasterio.warp import transform_geom
 
-def extract(fields,root):
-    fields=pd.read_csv(fields)
-    rows=[]
-    for tif in sorted(Path(root).glob('**/*.tif')):
-        if 'ECO_L3T_JET' not in tif.name and 'ETdaily' not in tif.name:
+from agrisim.config import REPO
+from agrisim.preprocessing.sentinel2_aligned import latest_hls_batch, reference_mask
+
+DEFAULT_TASKS = REPO / "data/raw/appeears"
+DEFAULT_OUTPUT = REPO / "data/processed/features/ecostress_overpasses.csv"
+COLUMNS = [
+    "field_id", "date_utc", "acquired_utc", "source", "source_file",
+    "footprint_pixels", "valid_pixels", "valid_fraction", "et_raw_median",
+    "reported_units", "cloud_qa_available", "spatial_support",
+]
+
+
+def timestamp_from_name(filename: str) -> datetime:
+    """Parse real ECO_L3T_JET files, e.g. doy2024278090958; don't guess dates."""
+    match = re.search(r"doy(20\d{2})(\d{3})(\d{6})(?!\d)", filename)
+    if not match:
+        raise ValueError(f"Unrecognized ECOSTRESS overpass timestamp: {filename}")
+    return datetime.strptime("".join(match.groups()), "%Y%j%H%M%S").replace(tzinfo=timezone.utc)
+
+
+def extract(task_root: Path = DEFAULT_TASKS, hls_batch: Path | None = None,
+            field_id: str = "evia_pilot") -> pd.DataFrame:
+    hls_batch = hls_batch or latest_hls_batch(field_id=field_id)
+    candidate, hls_transform, hls_crs = reference_mask(hls_batch, field_id)
+    hls_polygons = [geometry for geometry, value in
+                    shapes(candidate, mask=candidate.astype(bool), transform=hls_transform)
+                    if value == 1]
+    rows = []
+    # Task download includes one nasa_request.json, so only read verified task dirs.
+    for tif in sorted(Path(task_root).glob("**/ECO_L3T_JET.*_ETdaily_*.tif")):
+        task = tif.parent / "nasa_request.json"
+        if not task.exists() or '"ecostress_et"' not in task.read_text(encoding="utf-8"):
             continue
-        # Check the parent is a downloaded NASA AppEEARS task with a source record.
-        task=tif.parent/'nasa_request.json'
-        if not task.exists() or 'ECO_L3T_JET' not in task.read_text(encoding='utf-8'):
-            continue
-        d=re.search(r'(20\d{6})T',tif.name)
-        if not d:
-            # A NASA granule with no reliable date cannot be assigned to a field-date.
-            continue
-        dt=pd.to_datetime(d.group(1),format='%Y%m%d').strftime('%Y-%m-%d')
+        acquired = timestamp_from_name(tif.name)
         with rasterio.open(tif) as ds:
-            x,y=Transformer.from_crs('EPSG:4326',ds.crs,always_xy=True).transform(fields.lon.to_numpy(),fields.lat.to_numpy())
-            for (ix,field),value in zip(fields.iterrows(),ds.sample(zip(x,y),masked=True)):
-                v=value[0]
-                rows.append({'field_id':field.field_id,'date_utc':dt,
-                             'ecostress_ETdaily_mm_day':float(v) if not np.ma.is_masked(v) and np.isfinite(v) else np.nan,
-                             'source_file':tif.name,'spatial_support':'point_sample_not_parcel_mean'})
-    return pd.DataFrame(rows)
+            if ds.count != 1 or ds.crs is None:
+                raise ValueError(f"Invalid ECOSTRESS GeoTIFF structure: {tif}")
+            polygons = [transform_geom(hls_crs, ds.crs, polygon) for polygon in hls_polygons]
+            footprint = geometry_mask(polygons, out_shape=(ds.height, ds.width),
+                                      transform=ds.transform, invert=True, all_touched=True)
+            raw = ds.read(1, masked=True).filled(np.nan).astype("float64")
+            valid = footprint & np.isfinite(raw)
+            n = int(valid.sum())
+            total = int(footprint.sum())
+            if not total:
+                raise ValueError(f"ECOSTRESS raster does not intersect HLS sample: {tif}")
+            units = ds.tags().get("units", "unknown")
+        rows.append({
+            "field_id": field_id,
+            "date_utc": acquired.date().isoformat(),
+            "acquired_utc": acquired.isoformat(),
+            "source": "NASA_ECO_L3T_JET_002",
+            "source_file": tif.name,
+            "footprint_pixels": total,
+            "valid_pixels": n,
+            "valid_fraction": n / total,
+            "et_raw_median": float(np.median(raw[valid])) if n else np.nan,
+            "reported_units": units,
+            "cloud_qa_available": False,
+            "spatial_support": "provisional_hls_candidate_all_touched",
+        })
+    return pd.DataFrame(rows, columns=COLUMNS).sort_values("acquired_utc")
 
-def main():
-    p=argparse.ArgumentParser()
-    p.add_argument('--fields',type=Path,default=ROOT/'data/reference/fields.csv')
-    p.add_argument('--input-dir',type=Path,default=ROOT/'data/raw/appeears')
-    p.add_argument('--out',type=Path,default=ROOT/'data/processed/features/ecostress_overpasses.csv')
-    a=p.parse_args();df=extract(a.fields,a.input_dir)
-    a.out.parent.mkdir(parents=True,exist_ok=True);df.to_csv(a.out,index=False)
-    print(f'ECOSTRESS samples: {len(df)} -> {a.out}; no inferred dates or pixels')
-if __name__=='__main__':main()
+
+def main(argv: list[str] | None = None) -> None:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--input-dir", type=Path, default=DEFAULT_TASKS)
+    ap.add_argument("--hls-batch", type=Path)
+    ap.add_argument("--field-id", default="evia_pilot")
+    ap.add_argument("--out", type=Path, default=DEFAULT_OUTPUT)
+    a = ap.parse_args(argv)
+    observations = extract(a.input_dir, a.hls_batch, a.field_id)
+    a.out.parent.mkdir(parents=True, exist_ok=True)
+    observations.to_csv(a.out, index=False)
+    print("ECOSTRESS overpasses:", len(observations),
+          "; non-missing pilot estimates:", observations.et_raw_median.notna().sum())
+    print("Raw metadata units only; NO mm/day conversion and NO cloud QA claims")
+    print("Saved:", a.out)
+
+
+if __name__ == "__main__":
+    main()

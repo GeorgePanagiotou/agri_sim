@@ -18,7 +18,7 @@ STUDY_AREA = (23.32, 23.50, 38.75, 38.95)
 
 # A candidate location and historical windows; not a surveyed parcel.
 SOWING_LON, SOWING_LAT = 23.43232, 38.75920
-SOWING_SEASONS = (("2023-09-01", "2024-01-31"), ("2024-09-01", "2025-01-31"))
+SOWING_SEASONS = tuple((f"{y}-09-01", f"{y+1}-06-30") for y in range(2020, 2026))
 
 CLIMATE_START, CLIMATE_END = "1991-01-01", "2020-12-31"
 RECORD_START = "1981-01-01"

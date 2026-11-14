@@ -16,6 +16,57 @@ uv run python -m agrisim.data_sources.sentinel2 --help
 
 To check **RTX 5070 / 5070 Ti** with CUDA PyTorch, use `uv sync --extra gpu` and `uv run --extra gpu python scripts/check_gpu.py`. See [GPU setup](docs/gpu_setup.md). CUDA is optional; XGBoost / temporal analysis works on CPU first.
 
+
+## Reproducible pilot preprocessing (no one-off script edits)
+
+Once your North Evia NASA/ESA/FAO raw data have been downloaded, the following **local-only** commands rebuild the HLS indices, PELT events, footprint-aligned Sentinel-2 indices, SRTM terrain, optional ECOSTRESS raw overpasses and six-season multisource environmental table:
+
+```powershell
+uv run python -m agrisim.pipelines.prepare_multisource --plan
+uv run python -m agrisim.pipelines.prepare_multisource --min-clear 0.8
+uv run pytest -q
+```
+
+The command does not redownload imagery or touch raw/credential files; it **does regenerate** processed feature outputs. For details, input paths and scientific limitations see [Reproducible Preprocessing](docs/REPRODUCIBLE_PREPROCESSING.md).
+
+## NASA GPM IMERG (local .env token)
+
+The IMERG daily downloader loads `EARTHDATA_TOKEN` from the **repository-root**
+`.env` file, using `python-dotenv` and `earthaccess.login(strategy="environment")`.
+**Never** commit `.env` or share its token. If a token was exposed, revoke it
+and create a replacement through Earthdata Login.
+
+Create `.env` using `.env.example` as a template and set:
+
+```dotenv
+EARTHDATA_TOKEN=your_NEW_private_Earthdata_token
+```
+
+Start with exactly one downloaded day, without publishing a dataset:
+
+```powershell
+uv sync
+uv run python -m agrisim.data_sources.download_imerg_daily --first-year 2023 --smoke-test
+```
+
+Then download a complete calendar year:
+
+```powershell
+uv run python -m agrisim.data_sources.download_imerg_daily --first-year 2023 --last-year 2023 --workers 2
+```
+
+This script now uses current CMR-discovered Earthdata Cloud granule URLs, **not**
+the retired on-premises `gpm1.gesdisc.eosdis.nasa.gov` host. It downloads
+full global daily NetCDF4 files temporarily, extracts only the nearby North
+Evia 0.1-degree rainfall cells, and removes the global files. Allow adequate
+download bandwidth. Small annual Parquet files remain resumable. NASA IMERG
+Final Daily V07 precipitation is in mm/day; its coarse pixels are not farm
+measurements.
+
+**A valid token does not bypass a required GES DISC EULA/app authorization.**
+If the smoke test reports `EulaNotAccepted`, review any outstanding agreements
+and authorized apps in your Earthdata account and retry after approval.
+
 ## Main pipeline (after downloading NASA data)
 
 ```powershell

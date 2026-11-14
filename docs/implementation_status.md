@@ -1,4 +1,4 @@
-# Implementation status (2026-11-13)
+# Implementation status (2026-11-14)
 
 | Subsystem | Status | Notes |
 |---|---|---|
@@ -19,3 +19,7 @@
 | NVIDIA RTX 5070 Ti | Optional CUDA extra configured | Actual GPU smoke test requires user's Windows PC and NVIDIA driver |
 
 Offline verification covers package syntax, existing controls, retrospective decision logic and core new utilities. Remote APIs and CUDA cannot be validated in this workspace.
+
+## November 14 integrated preprocessing update
+
+The automated local pipeline `python -m agrisim.pipelines.prepare_multisource` now joins the previously tested HLS grid alignment, HLS-only PELT, Sentinel-2 3x3 HLS candidate footprint, SRTM terrain, optional native-unit ECOSTRESS ET, GAEZ five-crop rasters and the six-season regional daily environmental table. Refer to [REPRODUCIBLE_PREPROCESSING.md](REPRODUCIBLE_PREPROCESSING.md). All remote downloads and credentials still require user-side access and were not run in this sandbox.

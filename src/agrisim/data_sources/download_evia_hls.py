@@ -21,7 +21,8 @@ import numpy as np
 import pandas as pd
 import rasterio
 import requests
-from rasterio.warp import transform
+from rasterio.enums import Resampling
+from rasterio.warp import reproject, transform
 from rasterio.windows import Window
 
 if __package__:
@@ -114,11 +115,36 @@ def official_catalog(site, features, periods=SOWING_SEASONS):
         .drop_duplicates()
         .sort_values("granule")
     )
-    if set(frame.granule) != {f["id"] for f in features}:
+    nasa_ids = set(frame["granule"])
+    mirror_ids = {feature["id"] for feature in features}
+    nasa_only = sorted(nasa_ids - mirror_ids)
+    mirror_only = sorted(mirror_ids - nasa_ids)
+
+    # A mirror-only granule has no official NASA provenance: fail closed.
+    if mirror_only:
         raise RuntimeError(
-            "NASA and mirror catalogs differ for this window. Review coverage before publishing."
+            f"{len(mirror_only)} HLS granule(s) exist in the mirror but cannot "
+            f"be verified in NASA CMR; refusing to download: "
+            f"{mirror_only[:10]}"
         )
-    return frame
+
+    # A NASA-only granule cannot be downloaded by this mirror-based pipeline.
+    # Report the gap, but process all granules verified in BOTH catalogs.
+    if nasa_only:
+        print(
+            f"WARNING: {len(nasa_only)} NASA HLS granule(s) are absent "
+            "from the Planetary Computer mirror and will NOT be downloaded:",
+            flush=True,
+        )
+        for granule_id in nasa_only:
+            print(f"  NASA-only: {granule_id}", flush=True)
+        print(
+            f"Proceeding with {len(nasa_ids & mirror_ids)} cross-verified "
+            "granule(s). Coverage is incomplete relative to NASA CMR.",
+            flush=True,
+        )
+
+    return frame[frame["granule"].isin(mirror_ids)].copy()
 
 
 def storage(href):
@@ -464,6 +490,39 @@ def collect_fields(
     return final
 
 
+def aligned_clip_array(dataset, target_grid):
+    """Read an HLS native clip on one reference grid, preserving QA and nodata.
+
+    HLS source tiles can have different affine origins (or even CRSs). A stack
+    of window arrays from those tiles is NOT a geospatially aligned time series.
+    Nearest-neighbour reprojection keeps exact Fmask bits and avoids creating
+    synthetic reflectance values by interpolation. Any out-of-footprint pixels
+    remain nodata and are excluded by the usual clear-pixel check.
+    """
+    target_crs, target_transform = target_grid
+    current_grid = (dataset.crs.to_string(), tuple(dataset.transform)[:6])
+    if current_grid == target_grid:
+        return dataset.read()
+
+    destination = np.empty((len(BANDS), dataset.height, dataset.width), dtype="int16")
+    for index, band_name in enumerate(BANDS):
+        nodata = 255 if band_name == "Fmask" else -9999
+        destination[index].fill(nodata)
+        reproject(
+            source=rasterio.band(dataset, index + 1),
+            destination=destination[index],
+            src_transform=dataset.transform,
+            src_crs=dataset.crs,
+            src_nodata=nodata,
+            dst_transform=rasterio.Affine(*target_transform),
+            dst_crs=target_crs,
+            dst_nodata=nodata,
+            resampling=Resampling.nearest,
+            init_dest_nodata=True,
+        )
+    return destination
+
+
 def prepare(features, site, out=None, published_dir=None, geometry=None):
     out = site.directory(PROC) if out is None else out
     final = out if published_dir is None else published_dir
@@ -473,18 +532,23 @@ def prepare(features, site, out=None, published_dir=None, geometry=None):
     rows, scenes = [], {}
     grid = None
     field = roi
+    aligned_count = 0
     for f in features:
         scene = f["id"]
         with rasterio.open(site.directory(RAW) / f"{scene}.tif") as ds:
             if ds.descriptions != BANDS or ds.shape != (site.size, site.size):
                 raise ValueError(f"Unexpected clip layout: {scene}")
             current = (ds.crs.to_string(), tuple(ds.transform)[:6])
-            if grid is None and geometry is not None:
-                field = interior_pixels(current[0], current[1], ds.shape, geometry)
-            if grid is not None and current != grid:
-                raise ValueError(f"Different native grids at {site.name}: {scene}")
-            grid = current
-            raw = ds.read()
+            if grid is None:
+                # Keep the first source scene's native 30 m grid as the
+                # batch reference; record its CRS and transform in the NPZ.
+                grid = current
+                if geometry is not None:
+                    field = interior_pixels(grid[0], grid[1], ds.shape, geometry)
+            needs_alignment = current != grid
+            raw = aligned_clip_array(ds, grid)
+            if needs_alignment:
+                aligned_count += 1
         qa = raw[3].astype("uint8")
         # Fmask bits 1–5 = cloud, adjacent cloud, shadow, snow/ice, water.
         # A conservative extra filter excludes high aerosol (bits 6–7 both set).
@@ -503,6 +567,7 @@ def prepare(features, site, out=None, published_dir=None, geometry=None):
             "acquired_utc": properties["datetime"],
             "season": f"{year}-{year+1}",
             "granule": scene,
+            "native_grid_aligned": needs_alignment,
             "tile": scene.split(".")[2],
             "platform": properties.get("platform"),
             "candidate_clear_pixels": int((roi & clear).sum()),
@@ -515,6 +580,13 @@ def prepare(features, site, out=None, published_dir=None, geometry=None):
             row["full_interior_pixels"] = int(field.sum())
             row["clear_interior_pixels"] = int((field & clear).sum())
         rows.append(row)
+    if aligned_count:
+        print(
+            f"HLS: aligned {aligned_count}/{len(features)} cached clips to "
+            f"a common 30 m reference grid for {site.name}; "
+            "native source clips remain unchanged.",
+            flush=True,
+        )
     quality_key = "candidate_clear_pixels" if published_dir is None else "clear_interior_pixels"
     manifest = (
         pd.DataFrame(rows)

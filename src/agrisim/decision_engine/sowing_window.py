@@ -24,13 +24,13 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from agrisim.config import REF, REPO
+from agrisim.config import OUTPUTS, REF, REPO
 from agrisim.decision_engine import environmental_risk as er
 from agrisim.features import climate_indices as ci
 
 RULES = REPO / "configs" / "sowing_rules.yaml"
 WINDOWS = REF / "sowing_windows.csv"
-OUT = REPO / "outputs"
+OUT = OUTPUTS
 
 
 def load_rules(path: Path = RULES) -> dict:

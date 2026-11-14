@@ -40,7 +40,8 @@ ds = xr.open_dataset(PROC / "landsat_ndvi_monthly_30m.nc")
 raw = ds.ndvi.values  # uint8 (time, y, x)
 t = pd.DatetimeIndex(ds.time.values)
 T, H, W = raw.shape
-YEARS = list(range(1985, 2026))
+# Agricultural years fully inside the cube (Evia cube 1984-2025 -> 1985..2025, as before)
+YEARS = list(range(max(1985, int(t.year.min()) + 1), int(t.year.max()) + 1))
 
 
 def months(year, mlist):
@@ -120,8 +121,13 @@ for k in range(Y):
     c[~field_px] = 0
     cls[k] = c
 
-with rasterio.open(PROC / "landsat_dnbr_2021_30m.tif") as s:
-    dnbr = s.read(1)
+DNBR = PROC / "landsat_dnbr_2021_30m.tif"
+if DNBR.exists():  # Evia: the August 2021 fire (landsat_burn_2021.py)
+    with rasterio.open(DNBR) as s:
+        dnbr = s.read(1)
+else:              # other areas: no fire mapped -> burn band 0 everywhere
+    print("no burn map (landsat_dnbr_2021_30m.tif): burn band set to 0")
+    dnbr = np.zeros((H, W), "float32")
 burn = np.digitize(np.nan_to_num(dnbr, nan=0), [0.10, 0.27, 0.44, 0.66]).astype("uint8")
 burn[lu_now == 0] = 0
 

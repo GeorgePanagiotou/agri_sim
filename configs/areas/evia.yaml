@@ -1,0 +1,10 @@
+# North Evia demo area: the original paths and grid (data/, outputs/, UTM 34N). Do not move.
+label: North Evia (Kireas - Agia Anna), demo area
+study_area: [23.32, 23.50, 38.75, 38.95]   # lon_min, lon_max, lat_min, lat_max
+aoi: [22.80, 23.70, 38.60, 39.05]
+pilot: [23.43232, 38.75920]                # provisional sowing pilot point, NOT a surveyed field
+crs: EPSG:32634
+data_root: data
+outputs: outputs
+fire: {start: "2021-08-03", end: "2021-08-14"}
+notes: August 2021 wildfire; storm Athena 10-11 Oct 2021.

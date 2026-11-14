@@ -1,0 +1,15 @@
+label: Messara plain, Crete (pipeline test)
+study_area:
+- 24.75
+- 24.95
+- 35.0
+- 35.1
+pilot:
+- 24.85
+- 35.05
+crs: EPSG:32635
+data_root: data/areas/messara
+outputs: data/areas/messara/outputs
+fire: null
+notes: Created by prepare_area; pilot point = box centre unless given (not a surveyed
+  field).

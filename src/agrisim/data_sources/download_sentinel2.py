@@ -24,9 +24,9 @@ import requests
 from pyproj import Transformer
 
 try:
-    from .config import RAW, SOWING_LAT, SOWING_LON
+    from .config import CRS, RAW, SOWING_LAT, SOWING_LON
 except ImportError:
-    from .config import RAW, SOWING_LAT, SOWING_LON
+    from .config import CRS, RAW, SOWING_LAT, SOWING_LON
 
 TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 PROCESS_URL = "https://sh.dataspace.copernicus.eu/api/v1/process"
@@ -45,7 +45,7 @@ function evaluatePixel(s) { return [s.B03, s.B04, s.B08, s.SCL, s.dataMask]; }
 
 def bounds_utm(lon, lat, width_m):
     """Create metric bounding square in the native UTM CRS of Northern Evia."""
-    crs = "EPSG:32634"
+    crs = CRS
     x, y = Transformer.from_crs("EPSG:4326", crs, always_xy=True).transform(lon, lat)
     half = width_m / 2
     return [x - half, y - half, x + half, y + half], crs

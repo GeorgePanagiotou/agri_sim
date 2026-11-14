@@ -16,10 +16,9 @@ from rasterio.transform import from_origin
 from rasterio.vrt import WarpedVRT
 from rasterio.warp import Resampling, transform_bounds
 
-from config import STUDY_AREA
+from config import CRS, STUDY_AREA
 
 STAC = "https://planetarycomputer.microsoft.com/api/stac/v1"
-CRS = "EPSG:32634"
 RES = 30.0
 _w, _s, _e, _n = transform_bounds("EPSG:4326", CRS, STUDY_AREA[0], STUDY_AREA[2], STUDY_AREA[1], STUDY_AREA[3])
 X0, Y1 = np.floor(_w / RES) * RES, np.ceil(_n / RES) * RES

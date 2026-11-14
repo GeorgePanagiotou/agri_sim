@@ -32,9 +32,9 @@ from rasterio.vrt import WarpedVRT
 from rasterio.warp import Resampling, transform_bounds
 
 try:
-    from .config import PROC, RAW, STUDY_AREA
+    from .config import CRS, PROC, RAW, STUDY_AREA
 except ImportError:
-    from .config import PROC, RAW, STUDY_AREA
+    from .config import CRS, PROC, RAW, STUDY_AREA
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument("--first-year", type=int, default=2023)
@@ -45,7 +45,6 @@ if args.last_year < args.first_year:
     p.error("last-year must not be earlier than first-year")
 FIRST, LAST = args.first_year, args.last_year
 MAX_CLOUD = args.max_cloud  # scene-level; the per-pixel QA mask does the real work
-CRS = "EPSG:32634"
 RES = 30.0
 w, s, e, n = transform_bounds("EPSG:4326", CRS, STUDY_AREA[0], STUDY_AREA[2], STUDY_AREA[1], STUDY_AREA[3])
 X0, Y1 = np.floor(w / RES) * RES, np.ceil(n / RES) * RES

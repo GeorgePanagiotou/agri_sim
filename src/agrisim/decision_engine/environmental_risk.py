@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from agrisim.config import PROC, RAW, REPO
+from agrisim.config import OUTPUTS, PROC, RAW, REPO
 from agrisim.features import climate_indices as ci
 from agrisim.features.build_environment_multisource import imerg_daily, load_power, smap_daily
 from agrisim.features.build_multisource_environment import power_input
@@ -242,7 +242,7 @@ def main(argv=None):
     p.add_argument("--end", default=None, help="Default: last day with any input")
     p.add_argument("--power", type=Path, default=None, help="POWER parquet (default: latest full-span file)")
     p.add_argument("--rules", type=Path, default=RULES)
-    p.add_argument("--out", type=Path, default=REPO / "outputs" / "risk_daily.csv")
+    p.add_argument("--out", type=Path, default=OUTPUTS / "risk_daily.csv")
     a = p.parse_args(argv)
     rules = load_rules(a.rules)
     table = assess(load_inputs(power_path=a.power), rules, a.start, a.end)

@@ -23,20 +23,30 @@ from landsat_common import CRS, HEIGHT, RES, TRANSFORM, WIDTH, profile
 W, E, S, N = STUDY_AREA
 out_dir = RAW / "nasadem"
 out_dir.mkdir(parents=True, exist_ok=True)
-zips = list(out_dir.glob("NASADEM_HGT_*.zip"))
-if not zips:
+def tile_name(lon, lat):
+    return f"{'n' if lat >= 0 else 's'}{abs(int(np.floor(lat))):02d}{'e' if lon >= 0 else 'w'}{abs(int(np.floor(lon))):03d}"
+
+
+needed = {tile_name(lon, lat) for lon in np.arange(np.floor(W), E, 1.0) for lat in np.arange(np.floor(S), N, 1.0)}
+have = {z.stem.split("_")[-1].lower(): z for z in out_dir.glob("NASADEM_HGT_*.zip")}
+if not needed <= set(have):
     earthaccess.login(strategy="netrc")
     res = earthaccess.search_data(short_name="NASADEM_HGT", bounding_box=(W, S, E, N))
     earthaccess.download(res, str(out_dir))
-    zips = list(out_dir.glob("NASADEM_HGT_*.zip"))
-z = zips[0]
-hgt = next(n for n in zipfile.ZipFile(z).namelist() if n.endswith(".hgt"))
-print("NASADEM tile:", z.name, hgt)
+    have = {z.stem.split("_")[-1].lower(): z for z in out_dir.glob("NASADEM_HGT_*.zip")}
+zips = [have[k] for k in sorted(needed) if k in have]
+if not zips:
+    raise SystemExit(f"No NASADEM tiles for {sorted(needed)} (sea only?)")
 
-dem = np.zeros((HEIGHT, WIDTH), "float32")
-with rasterio.open(f"/vsizip/{z.as_posix()}/{hgt}") as src:
-    reproject(rasterio.band(src, 1), dem, dst_transform=TRANSFORM, dst_crs=CRS, resampling=Resampling.bilinear,
-              src_nodata=-32768, dst_nodata=np.nan)
+dem = np.full((HEIGHT, WIDTH), np.nan, "float32")
+for z in zips:  # several 1-degree tiles when the area crosses a degree line
+    hgt = next(n for n in zipfile.ZipFile(z).namelist() if n.endswith(".hgt"))
+    print("NASADEM tile:", z.name, hgt)
+    part = np.full((HEIGHT, WIDTH), np.nan, "float32")
+    with rasterio.open(f"/vsizip/{z.as_posix()}/{hgt}") as src:
+        reproject(rasterio.band(src, 1), part, dst_transform=TRANSFORM, dst_crs=CRS, resampling=Resampling.bilinear,
+                  src_nodata=-32768, dst_nodata=np.nan)
+    dem = np.where(np.isfinite(part), part, dem)
 dem[dem < -20] = np.nan
 sea = ~np.isfinite(dem) | (dem <= 0)
 
@@ -79,8 +89,11 @@ for dr, dc in NB:
     rec[better] = tgt[better]
 rec[sea] = -1
 
-with rasterio.open(PROC / "landsat_dnbr_2021_30m.tif") as s:
-    burned = (np.nan_to_num(s.read(1), nan=0) >= 0.27) & ~sea
+if (PROC / "landsat_dnbr_2021_30m.tif").exists():
+    with rasterio.open(PROC / "landsat_dnbr_2021_30m.tif") as s:
+        burned = (np.nan_to_num(s.read(1), nan=0) >= 0.27) & ~sea
+else:  # areas without a mapped fire: upslope burned share = 0
+    burned = np.zeros_like(sea)
 
 # accumulate from high to low
 order = np.argsort(-filled, axis=None)

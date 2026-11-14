@@ -33,3 +33,5 @@ __pycache__/
 *.pt
 *.pth
 *.joblib
+# per-area data (prepare_area): raw, processed, outputs, logs
+/data/areas/**

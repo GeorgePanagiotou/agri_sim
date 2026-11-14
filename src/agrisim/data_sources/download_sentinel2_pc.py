@@ -1,7 +1,7 @@
 """Download single-date ESA Sentinel-2 L2A windows for the Evia pilot from the Microsoft Planetary Computer mirror.
 
 Same product (ESA Copernicus Sentinel-2 Level-2A) and the SAME output format as download_sentinel2.py (CDSE Process
-API), so preprocessing/sentinel2_aligned.py reads both: a 990 m square at 10 m in EPSG:32634 centred on the pilot,
+API), so preprocessing/sentinel2_aligned.py reads both: a 990 m square at 10 m in the area's UTM grid centred on the pilot,
 five float32 bands B03_green, B04_red, B08_nir (surface reflectance, unitless), SCL, dataMask, plus a JSON manifest.
 No account is needed (Planetary Computer issues short-lived read tokens).
 

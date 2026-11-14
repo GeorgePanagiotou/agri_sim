@@ -31,12 +31,11 @@ from rasterio.transform import from_origin
 from rasterio.vrt import WarpedVRT
 from rasterio.warp import Resampling, transform_bounds
 
-from config import PROC, RAW, STUDY_AREA
+from config import CRS, PROC, RAW, STUDY_AREA
 
 FIRST = int(sys.argv[1]) if len(sys.argv) > 1 else 1984
 LAST = int(sys.argv[2]) if len(sys.argv) > 2 else 2025
 MAX_CLOUD = 70  # scene-level; the per-pixel QA mask does the real work
-CRS = "EPSG:32634"
 RES = 30.0
 w, s, e, n = transform_bounds("EPSG:4326", CRS, STUDY_AREA[0], STUDY_AREA[2], STUDY_AREA[1], STUDY_AREA[3])
 X0, Y1 = np.floor(w / RES) * RES, np.ceil(n / RES) * RES

@@ -1,0 +1,66 @@
+# Environmental Risk Engine v1: thresholds and their sources.
+# Levels: 0 none, 1 watch, 2 warning, 3 severe; missing input -> unknown (never "none").
+# All indicators for a date use completed days before that date only (as of the start of the day).
+# Status "standard" = taken from the cited scheme; "project_choice" = our choice, uncalibrated, to review locally.
+version: risk_rules_v1_2026-11-14
+
+reference_periods:
+  power: [1991, 2020]   # WMO standard climate normal period (WMO-No. 1203, 2017)
+  imerg: [2001, 2020]   # IMERG Final V07 daily record starts 2000-06; first 20 full years
+
+sources:
+  usdm: "U.S. Drought Monitor drought classification (percentile ranges D0-D4), https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx"
+  etccdi: "Zhang X. et al. (2011) Indices for monitoring changes in extremes based on daily temperature and precipitation data. WIREs Climate Change 2:851-870, doi:10.1002/wcc.147 (ETCCDI indices FD, TX90p, CDD, R95p, R99p)"
+
+drought:
+  # Percentile of the indicator among the same calendar dates (+/- half_window days) of the reference period.
+  rain_window_days: 90          # ~ SPI-3 time scale
+  rain_short_window_days: 30    # reported only, not used for the level
+  root_wetness_window_days: 7   # POWER GWETROOT mean of the last 7 days
+  half_window_days: 7
+  # Lower percentile = drier. USDM: D0 21-30, D1 11-20, D2 6-10 ("severe drought"), D3 3-5, D4 0-2.
+  watch_percentile_max: 30      # D0 abnormally dry          (standard: usdm)
+  warning_percentile_max: 20    # D1 moderate drought        (standard: usdm)
+  severe_percentile_max: 10     # D2 severe drought or worse (standard: usdm)
+  # Level from rain only. POWER root-zone wetness is reported as context, not used: over Evia it follows POWER's
+  # own (MERRA-2) rain, which disagrees with IMERG (e.g. ~1000 mm vs ~520-640 mm in 2020-2021), and it has a model
+  # floor (GWETROOT >= 0.53 almost always), see docs/risk_engine.md (checks).
+
+dry_spell:
+  dry_day_max_mm: 1.0           # dry day = rain < 1 mm (standard: etccdi CDD)
+  half_window_days: 7
+  min_run_days: 7               # shorter spells never flagged (project_choice)
+  # Higher percentile = longer than usual for the date. Mirrors the USDM bands (project_choice).
+  watch_percentile_min: 70
+  warning_percentile_min: 80
+  severe_percentile_min: 90
+
+heat:
+  hot_day_quantile: 0.90        # hot day = Tmax above the calendar-day 90th percentile (standard: etccdi TX90p)
+  half_window_days: 2           # 5-day calendar window (standard: etccdi)
+  min_tmax_c: 30.0              # and Tmax >= 30 C, so a mild-but-unusual winter day is not "heat" (project_choice;
+                                # crop-specific heat-stress temperatures to come from crops.csv)
+  window_days: 7
+  watch_min_days: 2             # project_choice
+  warning_min_days: 4           # project_choice
+  severe_min_days: 6            # 6 days = ETCCDI warm-spell length (WSDI)
+
+frost:
+  frost_day_max_c: 0.0          # frost day = Tmin < 0 C (standard: etccdi FD); POWER 2 m air, not ground frost
+  window_days: 7
+  watch_min_days: 1             # project_choice
+  warning_min_days: 3           # project_choice
+
+heavy_rain:
+  window_days: 3                # largest daily rain of the last 3 days
+  wet_day_min_mm: 1.0           # wet-day threshold for the percentiles (standard: etccdi)
+  watch_quantile: 0.95          # very wet day (standard: etccdi R95p)
+  warning_quantile: 0.99        # extremely wet day (standard: etccdi R99p)
+  # Ground already wet -> one level up: rain in the 14 days before the 3-day window at or above the 90th
+  # percentile for the date, same rain source (project_choice; POWER wetness not used, see drought note).
+  antecedent_days: 14
+  antecedent_percentile_min: 90
+  antecedent_half_window_days: 7
+
+confidence:
+  power_rain_note: "lower: NASA POWER rain used because IMERG is missing; POWER rain disagrees with IMERG in some years"

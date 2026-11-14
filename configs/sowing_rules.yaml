@@ -1,0 +1,23 @@
+# Sowing-window engine v1: weekly "is a seedbed check worth it?" verdicts. Crop windows and minimum soil
+# temperatures: data/reference/sowing_windows.csv. Every input is known at the start of the candidate week.
+# status "project_choice" = our rule, uncalibrated, to review with a local agronomist.
+version: sowing_rules_v1_2026-11-14
+
+week_step_days: 7                 # candidate weeks every 7 days from the window start
+
+moisture:
+  rain_window_days: 10
+  effective_rain_mm: 20           # >= 20 mm in the last 10 days = an "effective" sowing rain (project_choice,
+                                  # adapted from agroclimatic onset rules that use 20 mm, e.g. Sivakumar 1988,
+                                  # Agric. For. Meteorol. 42:295-305; past days only, no look-ahead)
+  smap_window_days: 3             # SMAP L4 surface moisture, mean of the last 3 days
+  smap_moist_quantile: 0.5        # moist if >= the Sep-Jun median of the SMAP record we hold (short baseline)
+
+temperature:
+  smap_window_days: 7             # SMAP L4 soil_temp_layer1 (0-5 cm), mean of the last 7 days
+  power_proxy_window_days: 7      # long record / SMAP missing: POWER 2 m air temperature (proxy, flagged)
+
+too_wet:
+  heavy_rain_min_level: 2         # risk engine heavy-rain warning or severe: wait, check field access (project_choice)
+
+# Verdict order when several apply: unknown > too_cold > too_dry > too_wet > check_worthy

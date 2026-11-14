@@ -30,6 +30,7 @@ python -m agrisim.pipelines.prepare_area --name messara --steps risk,sowing --fo
 | terrain | elevation, slope, flow accumulation, LS | NASADEM (Earthdata login) | minutes |
 | imerg | IMERG Final daily per 0.1° cell, 2001 → | GES DISC OPeNDAP (Earthdata login) | ~10–20 min |
 | imerg_late | IMERG Late Run after Final ends (~3.5 months) → yesterday, per quarter; Final wins where both exist | GES DISC OPeNDAP | ~5 min |
+| imerg_late_cal | Late on Final days 2019 → Final end; Late→Final factor per half-year from the last 3 years (readers scale Late with it) | GES DISC OPeNDAP | ~15 min |
 | power | POWER daily at the box centre, 1991 → end of last month | NASA POWER API | seconds |
 | risk | Environmental Risk Engine v1 | the above | ~1 min |
 | sowing | sowing-window engine v1 | the above | ~1 min |

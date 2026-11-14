@@ -89,6 +89,10 @@ scores RMSE 0.134 for vigour and AUC 0.72 for crop.
 - **All the skill comes from the winter NDVI.** Without the `ndvi_*` columns, every date stays at the baseline.
   Weather, sowing-window and MODIS features add nothing on unseen seasons. They are regional, and spring depends on
   rain after the decision date.
+- **Dropping the weather columns helps.** Leaving out `rain_*`, `reg_*` and `sow_*` (1 Mar, leave-one-season-out,
+  seasons 2002–2026) scores slightly better: vigour RMSE 0.110 vs 0.112, crop AUC 0.821 vs 0.819. It wins in 16 of
+  25 seasons and is much more robust in the out-of-range 2026 season (0.099 vs 0.113). Recommended model: field
+  history + winter NDVI + static layers.
 - **So the ML engine is an in-season monitor, not a pre-season forecast.** Train one model per decision date
   (`--as-of 02-01`, `03-01`, `04-01`) and show "which fields look on track / likely fallow", updated monthly from
   February.
@@ -136,6 +140,22 @@ It needs:
   yesterday with the IMERG Late Run (`raw/imerg_late/<year>_Q<n>.parquet`). `rain_includes_imerg_late` = 1 marks
   rows whose 90-day window uses Late days. The risk and sowing engines read the Late quarters too, and Final wins
   wherever both exist.
+- **Late is scaled to the Final level.** `data_prep/imerg_late_calibration.py` compares Late with Final on 2,465
+  common days (2019 to Sep 2025).
+  - The two agree day to day (r 0.91), but Late is wetter, and more so recently:
+
+    | Agricultural year | Oct–Mar Late/Final | Apr–Sep Late/Final |
+    |---|---|---|
+    | 2019–2022 | 0.87–1.01 | 1.02–1.24 |
+    | 2023 | 1.37 | 1.58 |
+    | 2024 | 1.21 | 1.21 |
+    | 2025 | 1.51 | 0.88 |
+
+  - Readers multiply Late days by one factor per half-year from the last 3 years: 0.728 for Oct–Mar, 0.725 for
+    Apr–Sep (`data/processed/imerg_late_to_final.csv`). Without that file they warn and use raw Late.
+  - In the live table, rain since 1 Sep went from 426 to 310 mm. It is still the wettest autumn in the record.
+  - The factor is an assumption; the ratio itself moved by ±0.15 between years. Show live rain as "provisional
+    (IMERG Late, scaled to Final)".
 
 Coordinates are `x_utm`, `y_utm` in the area's UTM CRS (named in the JSON). `post_fire` follows the area's fire
 date (Evia: seasons from 2022).

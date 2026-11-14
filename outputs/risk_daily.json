@@ -19,34 +19,32 @@
   },
   "level_counts": {
     "drought": {
-      "none": 1099,
-      "severe": 610,
-      "warning": 321,
-      "watch": 235
+      "none": 1064,
+      "severe": 619,
+      "warning": 341,
+      "watch": 241
     },
     "dry_spell": {
-      "none": 1606,
-      "severe": 397,
-      "warning": 148,
-      "watch": 114
+      "none": 1596,
+      "severe": 399,
+      "warning": 152,
+      "watch": 118
     },
     "heat": {
-      "none": 1986,
+      "none": 1998,
       "watch": 192,
       "warning": 58,
-      "severe": 17,
-      "unknown": 12
+      "severe": 17
     },
     "frost": {
-      "none": 2239,
-      "watch": 14,
-      "unknown": 12
+      "none": 2251,
+      "watch": 14
     },
     "heavy_rain": {
-      "none": 2178,
-      "watch": 47,
-      "warning": 27,
-      "severe": 13
+      "none": 2195,
+      "watch": 48,
+      "warning": 20,
+      "severe": 2
     }
   },
   "rain_source_days": {

@@ -2,7 +2,7 @@ crop_id,seasons,first_season,last_season,seasons_with_check_worthy_week,median_d
 barley,25,2001-2002,2025-2026,25,14.00,49.00,1.00,"verdict_long_record (IMERG + POWER, same rules every season); regional, not field-level"
 chickpea,25,2001-2002,2025-2026,25,7.00,35.00,1.00,"verdict_long_record (IMERG + POWER, same rules every season); regional, not field-level"
 lentil,25,2001-2002,2025-2026,24,10.50,42.00,0.96,"verdict_long_record (IMERG + POWER, same rules every season); regional, not field-level"
-phacelia,26,2001-2002,2026-2027,22,7.00,35.00,0.85,"verdict_long_record (IMERG + POWER, same rules every season); regional, not field-level"
+phacelia,26,2001-2002,2026-2027,22,10.50,35.00,0.85,"verdict_long_record (IMERG + POWER, same rules every season); regional, not field-level"
 sainfoin,26,2001-2002,2026-2027,25,7.00,35.00,0.96,"verdict_long_record (IMERG + POWER, same rules every season); regional, not field-level"
 vetch_oat,25,2001-2002,2025-2026,23,7.00,35.00,0.92,"verdict_long_record (IMERG + POWER, same rules every season); regional, not field-level"
 winter_wheat,25,2001-2002,2025-2026,24,10.50,42.00,0.96,"verdict_long_record (IMERG + POWER, same rules every season); regional, not field-level"

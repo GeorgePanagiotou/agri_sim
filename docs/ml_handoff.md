@@ -32,7 +32,19 @@ These are satellite stand-ins, not farm records. Say so in the app.
 
 ## 3. Features: use / drop
 
-- **Use:** `hist_*`, `ndvi_prior_*`, `soil_*`, `terrain_*`, `burn_*`, `post_fire`, `rain_*`, `reg_*`, `sow_*`.
+- **Use (recommended model):** `hist_*`, `ndvi_prior_*`, `soil_*`, `terrain_*`, `burn_*`, `post_fire`.
+- **Drop `rain_*`, `reg_*`, `sow_*` from the model.** Leave-one-season-out on the 1 Mar table:
+
+  | Features | Vigour RMSE | Crop AUC |
+  |---|---|---|
+  | Without weather | 0.110 | 0.821 |
+  | With weather | 0.112 | 0.819 |
+  | Baseline | 0.132 | — |
+
+  - Without weather is better in 16 of 25 seasons.
+  - In the unusually wet 2026 season it is much better: 0.099 vs 0.113 RMSE, 0.80 vs 0.77 AUC.
+  - The weather is regional (one value per season) and shifts when the rain source changes.
+  - Weather still reaches the farmer through the rule-based risk and sowing engines.
 - **Drop:**
   - `modis_*`: they add no skill, and the files end Dec 2025, so they are empty for the live season.
   - The provenance flags `rain_includes_imerg_late` and `reg_rain_source_is_imerg`: keep them for display
@@ -69,13 +81,15 @@ These are satellite stand-ins, not farm records. Say so in the app.
 
 ## 5. Known issues (read before trusting season 2026 / the live table)
 
-- **IMERG Late Run rain is ~35 % too wet in these files.** Final ends 2025-09-30. After that, rain comes from
-  IMERG Late, which is not gauge-adjusted.
-  - **Affected:** the `rain_*` and `reg_*` values of season 2026 and of `predict_2027_1114`. Seasons
-    2002–2025 are fine.
-  - **Fix:** a monthly Late→Final correction is being computed tonight
-    (`data_prep/imerg_late_calibration.py`). Corrected tables follow in the next commit.
-  - **Until then:** train on seasons ≤ 2025, or drop `rain_*` / `reg_*`.
+- **IMERG Late Run rain is corrected to the Final level (since commit after 003f4ca).** Final ends 2025-09-30.
+  After that, rain comes from IMERG Late, which is not gauge-adjusted.
+  - **The bias drifts.** On the same days over Evia, Late/Final was about 1.0 in 2019–2022, but 1.2–1.5 in
+    2023–2025.
+  - **The correction:** Late days are multiplied by 0.73, from the last 3 years
+    (`data/processed/imerg_late_to_final.csv`, `data_prep/imerg_late_calibration.py`).
+  - **What changed:** only season 2026 and the live table. Seasons 2002–2025 are identical.
+  - **Season 2026 is still out of range:** 619 mm of rain from 1 Sep to 1 Mar, against at most ~460 mm in
+    2002–2025. Its rain features are out of range for the model.
 - **Labels can change a little when a year is added.** Adding 2026 flipped ~1 % of the old crop/fallow labels.
   Spring peaks did not change.
 - **Some seasons are surprises the features can't see** (2008, 2023). Interval coverage drops there, so show it.

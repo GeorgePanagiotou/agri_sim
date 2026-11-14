@@ -15,6 +15,8 @@ The project uses NASA Landsat/HLS, SMAP, GPM IMERG, POWER, MODIS/VIIRS, ECOSTRES
 | `data/processed/features/site_characteristics.csv` | `field_id` | Optional NASA SRTM and FAO GAEZ point-sampled rasters, **not parcel averages**. |
 | `data/processed/features/ecostress_overpasses.csv` | `(field_id,date_utc,source_file)` | Optional NASA ECOSTRESS ET overpasses; no interpolation across gaps. |
 | `outputs/sowing_recommendations.csv` | `(field_id,candidate_week_start)` | Heuristic flags and evidence; NOT probability of sowing success or forecast. |
+| `outputs/risk_daily.csv` | `(field_id,date)` | Environmental Risk Engine v1 ([risk_engine.md](risk_engine.md)): drought, dry-spell, heat, frost, heavy-rain levels 0–3 / unknown as of the start of each day, with indicators, percentiles and explanations. Heuristic regional levels, NOT probabilities. |
+| `outputs/sowing_weeks.csv` | `(crop_id,season,week_start)` | Sowing-window engine v1 ([sowing_window.md](sowing_window.md)): weekly verdict check_worthy / too_dry / too_cold / too_wet / unknown, all evidence (`verdict`) and IMERG+POWER only (`verdict_long_record`). Regional screen, NOT a success probability. Summaries: `sowing_seasons*.csv`, `sowing_reliability.csv`. |
 | `outputs/risk_alerts.csv` | `(field_id,candidate_week_start)` | Rule counts, not calibrated risk probabilities. |
 | `outputs/decision_summary.csv` | `(field_id,candidate_week_start,strategy_id)` | Joined sowing/risk/rotation evidence; no invented probabilities or yields. |
 | `outputs/rotation_comparisons.csv` | `strategy_id` | Farmer/agronomist-entered relative 0–5 scores and user priorities; missing means **not ranked**. |

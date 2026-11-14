@@ -13,6 +13,10 @@
 | ET0 / daily water bucket | Prototype | Requires correct unit inputs, crop Kc and local soil storage; not calibrated |
 | Crop rotation ranking and water scenarios | Prototype | User-supplied priorities and crop phases, not yield predictions |
 | Sowing / drought / temperature risk screening | Working heuristics | Uncalibrated historical regional signals, not forecasts |
+| Sowing-window engine v1 | Implemented (2026-11-14) | 7 rotation crops, windows (team draft) + sourced soil-temperature minima in `data/reference/sowing_windows.csv`; 4 tests; [sowing_window.md](sowing_window.md) |
+| Sentinel-2 via Planetary Computer | Implemented (2026-11-14) | `download_sentinel2_pc.py`: same ESA L2A product and file format as the CDSE script, no account; 447 dates 2020-2026 |
+| FAO GAEZ v4 layers | Downloaded (2026-11-14) | Official URLs from FAO's GAEZ image-service catalogue (res05/CRUTS32/Hist/8110L/suLr_*) |
+| Environmental Risk Engine v1 | Implemented (2026-11-14) | Drought, dry spell, heat, frost, heavy rain; sourced thresholds in `configs/risk_rules.yaml`; 12 tests; event checks in [risk_engine.md](risk_engine.md) |
 | Supervised outcome ML | Code present, not trained | Needs farmer-confirmed outcomes from multiple independent farms |
 | Streamlit UI | Working shell | Needs real data, polished interactivity and model integration |
 | CI | Workflow present | GitHub Actions needs dependency resolution on GitHub, not tested remotely |

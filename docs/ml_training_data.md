@@ -76,6 +76,21 @@ scores RMSE 0.134 for vigour and AUC 0.72 for crop.
 - **Use leave-one-season-out and a forward split.** Spatial-block CV looks better but misleads: the regional
   features identify the season.
 
+## Uncertainty: honest "confidence" (1 Mar table, unseen seasons)
+
+| Method | 80 % interval coverage | Mean width (NDVI) |
+|---|---|---|
+| Quantile XGBoost (q10, q90), raw | 0.65 (too narrow) | 0.20 |
+| Naive: 5-year mean ± residual quantiles | 0.80 | 0.29 |
+| **Quantile XGBoost + season-grouped conformal correction (CQR)** | **0.80** | **0.265** |
+
+- **CQR:** for each held-out season, widen [q10, q90] by the 80th percentile of the conformity scores
+  `max(q10 − y, y − q90)` from the *other* seasons.
+- **Crop probabilities:** raw XGBoost is overconfident in the middle range (predicted 0.15 → observed 0.28).
+  Isotonic calibration fitted on the other seasons' out-of-season predictions fixes it (0.16 → 0.18, 0.74 → 0.75;
+  Brier 0.168).
+- Some seasons remain surprises the features cannot see (coverage 2008: 0.42, 2023: 0.56). Say so in the app.
+
 ## Prediction table (the season in progress)
 
 ```powershell

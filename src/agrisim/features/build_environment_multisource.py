@@ -84,13 +84,13 @@ def imerg_daily(raw_root: Path) -> pd.DataFrame:
             final_cells = points
         elif points != final_cells:
             raise ValueError(f"IMERG Final grid differs in {file.name}")
-    late_path = raw_root / "imerg_late" / "2025_Q4.parquet"
-    if late_path.exists():
+    # Late Run quarters (data_prep/download_imerg_late.py, e.g. 2025_Q4.parquet, 2026_Q1.parquet ...).
+    for late_path in sorted((raw_root / "imerg_late").glob("[12][0-9][0-9][0-9]_Q[1-4].parquet")):
         raw = pd.read_parquet(late_path)
         if not raw.empty:
             points = set(map(tuple, raw[["lat", "lon"]].drop_duplicates().to_numpy()))
             if final_cells is not None and points != final_cells:
-                raise ValueError("IMERG Late grid does not match Final regional cells")
+                raise ValueError(f"IMERG Late grid does not match Final regional cells: {late_path.name}")
             items.append(_regional_area_mean(raw, "IMERG_Late_V07"))
     if not items:
         return pd.DataFrame(columns=["date", "gpm_rain_mm", "gpm_valid_cells", "gpm_product"])
@@ -99,8 +99,11 @@ def imerg_daily(raw_root: Path) -> pd.DataFrame:
         # Final data may overlap between the yearly caches only if corrupted.
         raise ValueError("Duplicate date/product in IMERG caches")
     if union.date.duplicated().any():
-        overlaps = union.loc[union.date.duplicated(keep=False), ["date", "gpm_product"]]
-        raise ValueError(f"IMERG Final/Late overlap; resolve explicitly:\n{overlaps.head(10)}")
+        # Final wins: Late is kept only on dates without Final (e.g. when Final catches up after a Late download).
+        final_dates = set(union.loc[union.gpm_product.eq("IMERG_Final_V07"), "date"])
+        union = union[union.gpm_product.eq("IMERG_Final_V07") | ~union.date.isin(final_dates)]
+        if union.date.duplicated().any():
+            raise ValueError("Duplicate IMERG dates within one product")
     return union.sort_values("date")
 
 

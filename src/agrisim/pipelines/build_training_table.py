@@ -32,7 +32,7 @@ import rasterio
 import xarray as xr
 from pyproj import Transformer
 
-from agrisim.config import PROC
+from agrisim.config import AREA_NAME, CRS, FIRE_END, PROC
 from agrisim.decision_engine import environmental_risk as er
 from agrisim.decision_engine import sowing_window as sw
 
@@ -62,7 +62,7 @@ def field_pixels(proc: Path, which: str) -> pd.DataFrame:
     y = transform.f + (rows + 0.5) * transform.e
     lon, lat = Transformer.from_crs(crs, "EPSG:4326", always_xy=True).transform(x, y)
     return pd.DataFrame({"pixel_id": rows * lu.shape[1] + cols, "row": rows, "col": cols,
-                         "x_utm34n": x, "y_utm34n": y, "lon": lon, "lat": lat,
+                         "x_utm": x, "y_utm": y, "lon": lon, "lat": lat,
                          "land_use_2013_2020": lu[rows, cols], "burn_class_2021": burn[rows, cols]})
 
 
@@ -85,15 +85,27 @@ def static_layers(px: pd.DataFrame, proc: Path) -> pd.DataFrame:
     return out
 
 
-def imerg_cells(px: pd.DataFrame, proc: Path):
-    """Daily rain per 0.1 deg cell (cells x days) and each pixel's nearest cell index."""
+def imerg_cells(px: pd.DataFrame, proc: Path, raw_root: Path | None = None):
+    """Daily rain per 0.1 deg cell (days x cells), each pixel's nearest cell, and the IMERG Late dates.
+
+    IMERG Final first; IMERG Late Run quarters (raw/imerg_late/*_Q*.parquet) only after the last Final day.
+    """
     raw = pd.read_parquet(proc / "imerg_daily_2001_2025.parquet")
     raw["date"] = pd.to_datetime(raw["date"]).dt.normalize()
+    late_dir = (raw_root or proc.parent / "raw") / "imerg_late"
+    late_files = sorted(late_dir.glob("[12][0-9][0-9][0-9]_Q[1-4].parquet")) if late_dir.exists() else []
+    late_dates = pd.DatetimeIndex([])
+    if late_files:
+        late = pd.concat([pd.read_parquet(f) for f in late_files], ignore_index=True)
+        late["date"] = pd.to_datetime(late["date"]).dt.normalize()
+        late = late[late.date > raw.date.max()].drop_duplicates(["date", "lat", "lon"])
+        late_dates = pd.DatetimeIndex(late.date.unique())
+        raw = pd.concat([raw, late], ignore_index=True)
     table = raw.pivot_table(index="date", columns=["lat", "lon"], values="precip_mm")
     table = table.reindex(pd.date_range(table.index.min(), table.index.max(), freq="D"))
     centres = np.array(table.columns.tolist())
     d2 = (px.lat.to_numpy()[:, None] - centres[None, :, 0]) ** 2 + (px.lon.to_numpy()[:, None] - centres[None, :, 1]) ** 2
-    return table, d2.argmin(axis=1), centres
+    return table, d2.argmin(axis=1), late_dates
 
 
 def rain_features(table: pd.DataFrame, d: pd.Timestamp) -> dict[str, np.ndarray]:
@@ -197,7 +209,7 @@ def sowing_features(judged: pd.DataFrame, season: int, d: pd.Timestamp) -> dict:
 
 
 def build(first_season: int = 2002, last_season: int = 2025, as_of: str = "12-01", fields: str = "rainfed",
-          block_px: int = 50, proc: Path = PROC) -> pd.DataFrame:
+          block_px: int = 50, proc: Path = PROC, predict: bool = False) -> pd.DataFrame:
     px = static_layers(field_pixels(proc, fields), proc)
     px["block_id"] = (px.row // block_px) * 1000 + (px.col // block_px)
     fy = xr.open_dataset(proc / "landsat_field_years.nc")
@@ -207,7 +219,7 @@ def build(first_season: int = 2002, last_season: int = 2025, as_of: str = "12-01
     fy.close()
     cube_path = proc / "landsat_ndvi_monthly_30m.nc"
     cube = xr.open_dataset(cube_path) if cube_path.exists() else None
-    table, cell_idx, _ = imerg_cells(px, proc)
+    table, cell_idx, late_dates = imerg_cells(px, proc)
     modis = ModisFeatures(px, proc)
 
     risk_rules = er.load_rules()
@@ -216,28 +228,40 @@ def build(first_season: int = 2002, last_season: int = 2025, as_of: str = "12-01
     lev = er.levels(ind, risk_rules)
     judged, *_ = sw.run(data)
 
+    def cls_of(year):   # class per pixel for an agricultural year; NaN when unknown / not in the record
+        if year not in years:
+            return np.full(len(px), np.nan)
+        c = cls_all[years.index(year)].astype(float)
+        c[~np.isin(c, (1, 2, 3))] = np.nan
+        return c
+
+    def peak_of(year):
+        return peak_all[years.index(year)] if year in years else np.full(len(px), np.nan)
+
+    fire_season = None
+    if FIRE_END:   # first agricultural season after the fire (season Y runs Oct Y-1 .. Sep Y)
+        fe = pd.Timestamp(FIRE_END)
+        fire_season = fe.year + 1 if fe.month < 10 else fe.year + 2   # Aug 2021 fire -> season 2022
+
     frames = []
     for season in range(first_season, last_season + 1):
         d = decision_date(season, as_of)
-        i = years.index(season)
-        cls = cls_all[i].astype(float)
-        cls[~np.isin(cls, (1, 2, 3))] = np.nan
+        cls = cls_of(season)
         f = pd.DataFrame({"season": season, "decision_date": d.date().isoformat(),
-                          "target_class": cls, "target_spring_peak_ndvi": peak_all[i]})
+                          "target_class": cls, "target_spring_peak_ndvi": peak_of(season)})
         f["target_crop"] = (f.target_class == 1).astype(float).where(f.target_class.notna())
         for lag in (1, 2, 3):
-            prev = cls_all[i - lag].astype(float)
-            prev[~np.isin(prev, (1, 2, 3))] = np.nan
-            f[f"hist_class_lag{lag}"] = prev
-        f["hist_peak_lag1"] = peak_all[i - 1]
-        f["hist_peak_lag2"] = peak_all[i - 2]
-        past = cls_all[i - 5:i].astype(float)
-        past[~np.isin(past, (1, 2, 3))] = np.nan
-        f["hist_crop_share_5y"] = np.nanmean(np.where(np.isnan(past), np.nan, past == 1), axis=0)
-        f["hist_peak_mean_5y"] = np.nanmean(peak_all[i - 5:i], axis=0)
+            f[f"hist_class_lag{lag}"] = cls_of(season - lag)
+        f["hist_peak_lag1"] = peak_of(season - 1)
+        f["hist_peak_lag2"] = peak_of(season - 2)
+        past = np.stack([cls_of(season - lag) for lag in range(1, 6)])
+        with np.errstate(all="ignore"), warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            f["hist_crop_share_5y"] = np.nanmean(np.where(np.isnan(past), np.nan, past == 1), axis=0)
+            f["hist_peak_mean_5y"] = np.nanmean(np.stack([peak_of(season - lag) for lag in range(1, 6)]), axis=0)
         since = np.full(len(px), 10.0)
         for lag in range(10, 0, -1):
-            since = np.where(cls_all[i - lag] == 2, lag, since)
+            since = np.where(cls_of(season - lag) == 2, lag, since)
         f["hist_years_since_fallow"] = since
         if cube is not None:
             months = [m for m in pd.date_range(f"{d.year if d.month >= 9 else d.year - 1}-09-01", d, freq="MS")
@@ -248,25 +272,29 @@ def build(first_season: int = 2002, last_season: int = 2025, as_of: str = "12-01
                                                    if sel.sizes["time"] else np.nan)
         for k, v in rain_features(table, d).items():
             f[k] = v[cell_idx]
+        f["rain_includes_imerg_late"] = float(((late_dates < d) & (late_dates >= d - pd.Timedelta(days=90))).any())
         for k, v in modis.features(d).items():
             f[k] = v
         for k, v in {**regional_features(data, ind, lev, d), **sowing_features(judged, season, d)}.items():
             f[k] = v
-        f["post_fire"] = float(season >= 2022)
+        f["post_fire"] = float(fire_season is not None and season >= fire_season)
         frames.append(pd.concat([px.reset_index(drop=True), f], axis=1))
     if cube is not None:
         cube.close()
     out = pd.concat(frames, ignore_index=True)
+    if predict:   # rows for a season whose outcome is not known yet: keep every pixel, targets stay NaN
+        return out.reset_index(drop=True)
     return out[out.target_class.notna()].reset_index(drop=True)
 
 
 def dictionary(table: pd.DataFrame, as_of: str) -> dict:
     groups = ["season", "block_id", "pixel_id"]
-    ids = ["row", "col", "x_utm34n", "y_utm34n", "lon", "lat", "decision_date", "land_use_2013_2020"]
+    ids = ["row", "col", "x_utm", "y_utm", "lon", "lat", "decision_date", "land_use_2013_2020"]
     targets = [c for c in table if c.startswith("target_")]
     features = [c for c in table if c not in groups + ids + targets]
     return {
-        "version": "training_table_v1_2026-11-14", "rows": len(table), "as_of": as_of,
+        "version": "training_table_v1_2026-11-14", "rows": len(table), "as_of": as_of, "area": AREA_NAME,
+        "crs_of_x_utm_y_utm": CRS,
         "unit": "rainfed field pixel (30 m) x agricultural season (Oct Y-1 .. Sep Y)",
         "targets": {t: "satellite stand-in, NOT a farm outcome" for t in targets},
         "class_names": CLASS_NAMES, "features": features, "group_columns": groups, "id_columns": ids,
@@ -285,9 +313,19 @@ def main(argv=None):
     p.add_argument("--as-of", default="12-01", help="Decision date MM-DD (Sep-Dec = year before the season)")
     p.add_argument("--fields", choices=["rainfed", "all"], default="rainfed")
     p.add_argument("--block-px", type=int, default=50, help="Spatial CV block size in 30 m pixels")
-    p.add_argument("--out", type=Path, default=OUT)
+    p.add_argument("--out", type=Path, default=None,
+                   help="default: data/processed/ml/training_table_v1.parquet, or predict_<season>_<as-of>.parquet")
+    p.add_argument("--predict-season", type=int, default=None,
+                   help="build PREDICTION rows (targets empty) for one season, e.g. 2027 = Oct 2026 .. Sep 2027")
     a = p.parse_args(argv)
-    table = build(a.first_season, a.last_season, a.as_of, a.fields, a.block_px)
+    if a.predict_season:
+        a.first_season = a.last_season = a.predict_season
+        if decision_date(a.predict_season, a.as_of) > pd.Timestamp.today():
+            p.error("decision date is in the future; choose an --as-of that has passed")
+    out_path = a.out or (OUT if not a.predict_season
+                         else OUT.parent / f"predict_{a.predict_season}_{a.as_of.replace('-', '')}.parquet")
+    a.out = out_path
+    table = build(a.first_season, a.last_season, a.as_of, a.fields, a.block_px, predict=bool(a.predict_season))
     a.out.parent.mkdir(parents=True, exist_ok=True)
     table.to_parquet(a.out, index=False)
     meta = dictionary(table, a.as_of)

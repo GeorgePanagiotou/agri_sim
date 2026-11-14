@@ -57,6 +57,25 @@ Group / ID columns, **not features**: `season`, `block_id` (50 × 50 px = 1.5 km
 - Autumn-NDVI columns need the local monthly cube (`landsat_ndvi_monthly_30m.nc`, 150 MB, not in git). Without it,
   the table is built without them.
 
+## Prediction table (the season in progress)
+
+```powershell
+python -m agrisim.pipelines.build_training_table --predict-season 2027 --as-of 11-14
+```
+
+This writes `data/processed/ml/predict_2027_1114.parquet`: one row per field pixel with the same feature columns
+and empty targets. Season 2027 runs Oct 2026 … Sep 2027. It needs:
+
+- **Last season's class and peak (2026):** the Landsat cube must reach Sep 2026 (`landsat_ndvi_history.py 2026
+  2026`, then `landsat_field_map.py`).
+- **Recent rain:** IMERG Final ends about 3.5 months back. `data_prep/download_imerg_late.py` fills the gap up to
+  yesterday with the IMERG Late Run (`raw/imerg_late/<year>_Q<n>.parquet`). `rain_includes_imerg_late` = 1 marks
+  rows whose 90-day window uses Late days. The risk and sowing engines read the Late quarters too, and Final wins
+  wherever both exist.
+
+Coordinates are `x_utm`, `y_utm` in the area's UTM CRS (named in the JSON). `post_fire` follows the area's fire
+date (Evia: seasons from 2022).
+
 ## Other areas
 
 `python -m agrisim.pipelines.prepare_area --name <area> --bbox ...` builds every input and then this table for any

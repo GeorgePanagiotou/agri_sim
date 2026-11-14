@@ -15,6 +15,7 @@ Steps, in order (all public NASA/USGS data + SoilGrids; Earthdata login from ~/_
     soil            SoilGrids 2.0 on the 30 m grid (texture, SOC, AWC, RUSLE K)
     terrain         NASADEM elevation, slope, flow accumulation, LS factor
     imerg           GPM IMERG Final daily per 0.1 deg cell (GES DISC OPeNDAP)
+    imerg_late      GPM IMERG Late Run after Final ends .. yesterday (same cells; product kept separate)
     power           NASA POWER daily at the area centre (1991 .. end of last month)
     risk            Environmental Risk Engine v1
     sowing          sowing-window engine v1
@@ -35,8 +36,8 @@ from pathlib import Path
 from agrisim.area import REPO, create, load
 
 PY = sys.executable
-STEP_ORDER = ["harmonization", "landsat", "field_map", "soil", "terrain", "imerg", "power", "risk", "sowing",
-              "training_table"]
+STEP_ORDER = ["harmonization", "landsat", "field_map", "soil", "terrain", "imerg", "imerg_late", "power", "risk",
+              "sowing", "training_table"]
 
 
 def last_month_end(today: date | None = None) -> date:
@@ -57,6 +58,8 @@ def steps(area, first_year: int, last_year: int, imerg_last: int) -> dict:
         "terrain": {"done": proc / "terrain_30m.tif", "cmd": [PY, str(dp / "terrain_nasadem.py")]},
         "imerg": {"done": proc / "imerg_daily_2001_2025.parquet",
                   "cmd": [PY, str(dp / "download_imerg_daily.py"), "2001", str(imerg_last)]},
+        "imerg_late": {"done": area.data_root / "raw" / "imerg_late",   # re-run with --force imerg_late to update
+                       "cmd": [PY, str(dp / "download_imerg_late.py")]},
         "power": {"done": proc / f"power_daily_19910101_{power_end:%Y%m%d}.parquet",
                   "cmd": [PY, "-m", "agrisim.data_sources.power", "--start", "1991-01-01",
                           "--end", power_end.isoformat()]},

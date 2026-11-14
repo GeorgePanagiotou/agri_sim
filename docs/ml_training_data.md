@@ -9,7 +9,21 @@ python -m agrisim.pipelines.build_training_table --as-of 03-01 --out data/proces
 ```
 
 Output: `data/processed/ml/training_table_v1.parquet` with a `.json` data dictionary (feature list, targets, group
-columns, rules). 117,272 rows × 64 columns: 50 features, 4,911 pixels, 95 spatial blocks, 24 seasons.
+columns, rules). 4,911 pixels and 95 spatial blocks. Seasons run 2002 to the last season in the field history,
+2026 since the 2026-11-14 rebuild.
+
+**Ready-made tables in git (Evia),** so the ML work does not need the 133 MB local NDVI cube:
+
+| File | Decision date | Use |
+|---|---|---|
+| `training_table_1114.parquet` | 14 Nov | same columns as the live table below |
+| `training_table_v1.parquet` | 1 Dec | pre-season (no skill over the baseline; keep as the reference) |
+| `training_table_0201.parquet` | 1 Feb | first in-season model |
+| `training_table_0301.parquet` | 1 Mar | main in-season model |
+| `training_table_0401.parquet` | 1 Apr | late in-season model |
+| `predict_2027_1114.parquet` | 14 Nov 2026 | live season 2027, targets empty |
+
+Each table has a `.json` dictionary next to it. Short version for the ML engine: [ml_handoff.md](ml_handoff.md).
 
 ## Targets: satellite stand-ins, not farm outcomes
 

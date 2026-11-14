@@ -1,0 +1,55 @@
+{
+  "rules": "risk_rules_v1_2026-11-14",
+  "rows": 2265,
+  "first_day": "2020-09-01",
+  "last_day": "2026-11-13",
+  "reference_periods": {
+    "power": [
+      1991,
+      2020
+    ],
+    "imerg": [
+      2001,
+      2020
+    ]
+  },
+  "sources": {
+    "usdm": "U.S. Drought Monitor drought classification (percentile ranges D0-D4), https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx",
+    "etccdi": "Zhang X. et al. (2011) Indices for monitoring changes in extremes based on daily temperature and precipitation data. WIREs Climate Change 2:851-870, doi:10.1002/wcc.147 (ETCCDI indices FD, TX90p, CDD, R95p, R99p)"
+  },
+  "level_counts": {
+    "drought": {
+      "none": 1099,
+      "severe": 610,
+      "warning": 321,
+      "watch": 235
+    },
+    "dry_spell": {
+      "none": 1606,
+      "severe": 397,
+      "warning": 148,
+      "watch": 114
+    },
+    "heat": {
+      "none": 1986,
+      "watch": 192,
+      "warning": 58,
+      "severe": 17,
+      "unknown": 12
+    },
+    "frost": {
+      "none": 2239,
+      "watch": 14,
+      "unknown": 12
+    },
+    "heavy_rain": {
+      "none": 2178,
+      "watch": 47,
+      "warning": 27,
+      "severe": 13
+    }
+  },
+  "rain_source_days": {
+    "IMERG": 2265
+  }
+}

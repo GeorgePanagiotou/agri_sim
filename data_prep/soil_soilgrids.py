@@ -13,9 +13,12 @@ Output: data/processed/soil_30m.tif (bands named) + data/processed/soil_summary.
 
     ..\\.venv\\Scripts\\python.exe data_prep\\soil_soilgrids.py
 """
+import time
+
 import numpy as np
 import pandas as pd
 import rasterio
+import rasterio.errors
 from rasterio.vrt import WarpedVRT
 from rasterio.warp import Resampling
 
@@ -28,11 +31,19 @@ PROPS = {"clay": 10, "sand": 10, "silt": 10, "soc": 10, "bdod": 100, "cfvo": 10,
 DEPTHS = {"0-5cm": 50, "5-15cm": 100, "15-30cm": 150, "30-60cm": 300, "60-100cm": 400}  # thickness mm
 
 
-def read(prop, depth):
-    with rasterio.open(URL.format(p=prop, d=depth)) as src, WarpedVRT(
-            src, crs=CRS, transform=TRANSFORM, width=WIDTH, height=HEIGHT, resampling=Resampling.bilinear,
-            src_nodata=src.nodata, nodata=np.nan, dtype="float32") as vrt:
-        return vrt.read(1) / PROPS[prop]
+def read(prop, depth, tries=5):
+    """Window read of one layer; the remote VRT sometimes fails mid-read ("Cannot read N bytes"), so retry."""
+    for attempt in range(tries):
+        try:
+            with rasterio.open(URL.format(p=prop, d=depth)) as src, WarpedVRT(
+                    src, crs=CRS, transform=TRANSFORM, width=WIDTH, height=HEIGHT, resampling=Resampling.bilinear,
+                    src_nodata=src.nodata, nodata=np.nan, dtype="float32") as vrt:
+                return vrt.read(1) / PROPS[prop]
+        except rasterio.errors.RasterioIOError as err:
+            if attempt == tries - 1:
+                raise
+            print(f"  {prop} {depth}: {err}; retry {attempt + 1}", flush=True)
+            time.sleep(5 * 2 ** attempt)
 
 
 soil = {(p, d): read(p, d) for p in PROPS for d in DEPTHS}

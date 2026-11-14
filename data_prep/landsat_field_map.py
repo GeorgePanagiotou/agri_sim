@@ -14,7 +14,7 @@ Because the threshold uses every year, adding a year can flip borderline years: 
 about 1 % of field pixel-years (spring_peak unchanged).
 
 Outputs (data/processed):
-  landsat_field_map_30m.tif   band 1 land use 2013-2020, band 2 land use 1985-1995, band 3 burn 2021 (dNBR class)
+  landsat_field_map_30m.tif   band 1 land use 2013-2020, band 2 land use in the first 11 years (Evia 1985-1995), band 3 burn 2021 (dNBR class)
                               land use: 0 no data/water, 1 rainfed field, 2 irrigated summer field, 3 woody,
                                         4 herbaceous/shrub (grazing land), 5 bare/built
                               burn: 0 unburned, 1 low, 2 moderate-low, 3 moderate-high, 4 high
@@ -42,8 +42,11 @@ ds = xr.open_dataset(PROC / "landsat_ndvi_monthly_30m.nc")
 raw = ds.ndvi.values  # uint8 (time, y, x)
 t = pd.DatetimeIndex(ds.time.values)
 T, H, W = raw.shape
-# Agricultural years fully inside the cube (Evia cube 1984-2025 -> 1985..2025, as before)
-YEARS = list(range(max(1985, int(t.year.min()) + 1), int(t.year.max()) + 1))
+# Agricultural years fully inside the cube: Oct of the year before .. Sep (Evia cube 1984-2026 -> 1985..2026).
+# A year counts only once the cube has its September, so a run in spring does not label a half season.
+YEARS = list(range(max(1985, int(t.year.min()) + 1), int(t[t.month == 9].year.max()) + 1))
+# "Old" land-use period: the first 11 years of the record (1985-1995 in Evia; later for areas with a shorter record)
+OLD0, OLD1 = YEARS[0], YEARS[0] + 10
 
 
 def months(year, mlist):
@@ -99,7 +102,7 @@ def land_use(sel):
 
 yrs = np.array(YEARS)
 lu_now = land_use((yrs >= 2013) & (yrs <= 2020))
-lu_old = land_use((yrs >= 1985) & (yrs <= 1995))
+lu_old = land_use((yrs >= OLD0) & (yrs <= OLD1))
 
 # per-pixel 2-means on spring peaks (all years)
 lo = np.nanpercentile(np.where(valid, peak, np.nan), 25, axis=0)
@@ -136,7 +139,7 @@ burn[lu_now == 0] = 0
 prof = profile("uint8", count=3, nodata=None)
 with rasterio.open(PROC / "landsat_field_map_30m.tif", "w", **prof) as dst:
     dst.write(np.stack([lu_now, lu_old, burn]))
-    dst.descriptions = ("land_use_2013_2020", "land_use_1985_1995", "burn_2021")
+    dst.descriptions = ("land_use_2013_2020", f"land_use_{OLD0}_{OLD1}", "burn_2021")
     dst.update_tags(land_use="0 none/water, 1 rainfed field, 2 irrigated summer field, 3 woody, "
                              "4 herbaceous/shrub (grazing), 5 bare/built",
                     burn_2021="0 unburned, 1 low, 2 moderate-low, 3 moderate-high, 4 high (dNBR 0.10/0.27/0.44/0.66)")
@@ -173,7 +176,7 @@ switch = ((a != b) & both).sum() / both.sum()
 p = (seq == 2).sum() / np.isin(seq, (1, 2)).sum()
 print({"field_ha_2013_2020": round(float(np.isin(lu_now, (1, 2)).sum() * ha)),
        "rainfed_ha": round(float((lu_now == 1).sum() * ha)), "irrigated_ha": round(float((lu_now == 2).sum() * ha)),
-       "field_ha_1985_1995": round(float(np.isin(lu_old, (1, 2)).sum() * ha)),
+       f"field_ha_{OLD0}_{OLD1}": round(float(np.isin(lu_old, (1, 2)).sum() * ha)),
        "fields_then_not_now_ha": round(float((np.isin(lu_old, (1, 2)) & ~np.isin(lu_now, (1, 2))).sum() * ha)),
        "fields_burned_2021_ha": round(float((np.isin(lu_now, (1, 2)) & (burn >= 1)).sum() * ha)),
        "grazing_ha": round(float((lu_now == 4).sum() * ha)), "grazing_burned_ha": round(float(((lu_now == 4) & (burn >= 1)).sum() * ha)),

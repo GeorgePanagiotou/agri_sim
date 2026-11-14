@@ -84,9 +84,13 @@ def imerg_daily(raw_root: Path) -> pd.DataFrame:
             final_cells = points
         elif points != final_cells:
             raise ValueError(f"IMERG Final grid differs in {file.name}")
-    # Late Run quarters (data_prep/download_imerg_late.py, e.g. 2025_Q4.parquet, 2026_Q1.parquet ...).
-    for late_path in sorted((raw_root / "imerg_late").glob("[12][0-9][0-9][0-9]_Q[1-4].parquet")):
-        raw = pd.read_parquet(late_path)
+    # Late Run quarters (data_prep/download_imerg_late.py, e.g. 2025_Q4.parquet, 2026_Q1.parquet ...),
+    # scaled to the Final level with the monthly factors (data_prep/imerg_late_calibration.py).
+    from agrisim.data_sources import imerg_late_calibration as late_cal
+    late_files = sorted((raw_root / "imerg_late").glob("[12][0-9][0-9][0-9]_Q[1-4].parquet"))
+    factors = late_cal.load_factors(raw_root.parent / "processed") if late_files else None
+    for late_path in late_files:
+        raw = late_cal.apply(pd.read_parquet(late_path), factors)
         if not raw.empty:
             points = set(map(tuple, raw[["lat", "lon"]].drop_duplicates().to_numpy()))
             if final_cells is not None and points != final_cells:

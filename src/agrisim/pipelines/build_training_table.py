@@ -99,6 +99,8 @@ def imerg_cells(px: pd.DataFrame, proc: Path, raw_root: Path | None = None):
         late = pd.concat([pd.read_parquet(f) for f in late_files], ignore_index=True)
         late["date"] = pd.to_datetime(late["date"]).dt.normalize()
         late = late[late.date > raw.date.max()].drop_duplicates(["date", "lat", "lon"])
+        from agrisim.data_sources import imerg_late_calibration as late_cal   # Late scaled to the Final level
+        late = late_cal.apply(late, late_cal.load_factors(proc))
         late_dates = pd.DatetimeIndex(late.date.unique())
         raw = pd.concat([raw, late], ignore_index=True)
     table = raw.pivot_table(index="date", columns=["lat", "lon"], values="precip_mm")
@@ -208,12 +210,23 @@ def sowing_features(judged: pd.DataFrame, season: int, d: pd.Timestamp) -> dict:
     return out
 
 
-def build(first_season: int = 2002, last_season: int = 2025, as_of: str = "12-01", fields: str = "rainfed",
+def indicators_through_next_day(data: pd.DataFrame, rules: dict) -> pd.DataFrame:
+    """Risk indicators including the day after the last data day.
+
+    Indicators for date t use data before t, so the engine has no row for "today" when the data ends yesterday.
+    One empty day appended to the inputs gives that row (the live decision date)."""
+    nxt = pd.DatetimeIndex([data.index.max() + pd.Timedelta(days=1)], name=data.index.name)
+    return er.indicators(data.reindex(data.index.append(nxt)), rules)
+
+
+def build(first_season: int = 2002, last_season: int | None = None, as_of: str = "12-01", fields: str = "rainfed",
           block_px: int = 50, proc: Path = PROC, predict: bool = False) -> pd.DataFrame:
     px = static_layers(field_pixels(proc, fields), proc)
     px["block_id"] = (px.row // block_px) * 1000 + (px.col // block_px)
     fy = xr.open_dataset(proc / "landsat_field_years.nc")
-    years = list(fy.year.values)
+    years = [int(y) for y in fy.year.values]
+    if last_season is None:   # last season in the field history (landsat_field_map.py keeps complete seasons only)
+        last_season = years[-1]
     cls_all = fy.year_class.values[:, px.row, px.col]
     peak_all = decode_ndvi(fy.spring_peak.values[:, px.row, px.col])
     fy.close()
@@ -224,9 +237,7 @@ def build(first_season: int = 2002, last_season: int = 2025, as_of: str = "12-01
 
     risk_rules = er.load_rules()
     data = er.load_inputs()
-    # indicators for date t use data before t; one empty day after the last data day gives "as of today" values
-    nxt = pd.DatetimeIndex([data.index.max() + pd.Timedelta(days=1)])
-    ind = er.indicators(data.reindex(data.index.append(nxt)), risk_rules)
+    ind = indicators_through_next_day(data, risk_rules)
     lev = er.levels(ind, risk_rules)
     judged, *_ = sw.run(data)
 
@@ -311,7 +322,7 @@ def dictionary(table: pd.DataFrame, as_of: str) -> dict:
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--first-season", type=int, default=2002)
-    p.add_argument("--last-season", type=int, default=2025)
+    p.add_argument("--last-season", type=int, default=None, help="default: last season in landsat_field_years.nc")
     p.add_argument("--as-of", default="12-01", help="Decision date MM-DD (Sep-Dec = year before the season)")
     p.add_argument("--fields", choices=["rainfed", "all"], default="rainfed")
     p.add_argument("--block-px", type=int, default=50, help="Spatial CV block size in 30 m pixels")

@@ -28,3 +28,15 @@ def test_rain_features_need_complete_windows():
     assert f["rain_prev_summer_jja_mm"].tolist() == [92.0, 184.0]
     table.loc["2024-11-20"] = np.nan
     assert np.isnan(bt.rain_features(table, pd.Timestamp("2024-12-01"))["rain_prior_30d_mm"]).all()
+
+
+def test_indicators_have_a_row_for_the_day_after_the_data():
+    from test_environmental_risk import RULES, synthetic   # same synthetic inputs as the risk-engine tests
+    data = synthetic(end="2025-11-13")
+    ind = bt.indicators_through_next_day(data, RULES)
+    today = pd.Timestamp("2025-11-14")
+    assert ind.index.max() == today
+    plain = bt.er.indicators(data, RULES)
+    # the new row is what the engine would say on 14 Nov with data to 13 Nov; earlier rows are unchanged
+    assert np.isfinite(ind.loc[today, "rain_long_pct"])
+    pd.testing.assert_frame_equal(ind.drop(index=today), plain, check_freq=False)

@@ -129,10 +129,23 @@ for year in range(FIRST, LAST + 1):
 
 pd.DataFrame(rows).sort_values("date").to_csv(SCENES_CSV, index=False)
 
-# assemble everything on disk into one cube
-years = sorted(int(p.stem) for p in OUT_YEARS.glob("*.npz"))
-ndvi = np.concatenate([np.load(OUT_YEARS / f"{y}.npz")["ndvi"] for y in years])
-nobs = np.concatenate([np.load(OUT_YEARS / f"{y}.npz")["nobs"] for y in years])
+# Assemble from the yearly files AND the existing cube: years whose yearly file is gone are kept from the existing
+# cube, never dropped (a short run must not replace a long history).
+out = PROC / "landsat_ndvi_monthly_30m.nc"
+per_year = {}
+if out.exists():
+    with xr.open_dataset(out) as old:
+        old_years = pd.DatetimeIndex(old.time.values).year
+        for yr in sorted(set(old_years)):
+            sel = old_years == yr
+            if sel.sum() == 12:
+                per_year[int(yr)] = (old.ndvi.values[sel], old.nobs.values[sel])
+for p in OUT_YEARS.glob("*.npz"):
+    z = np.load(p)
+    per_year[int(p.stem)] = (z["ndvi"], z["nobs"])
+years = sorted(per_year)
+ndvi = np.concatenate([per_year[y][0] for y in years])
+nobs = np.concatenate([per_year[y][1] for y in years])
 time = pd.to_datetime([f"{y}-{m:02d}-15" for y in years for m in range(1, 13)])
 x = X0 + RES * (np.arange(WIDTH) + 0.5)
 y = Y1 - RES * (np.arange(HEIGHT) + 0.5)
@@ -142,6 +155,8 @@ ds["ndvi"].attrs = {"long_name": "monthly median Landsat NDVI" + (", harmonized 
 ds["nobs"].attrs = {"long_name": "clear Landsat observations in the month"}
 ds.attrs = {"crs": CRS, "resolution_m": RES, "source": "Landsat Collection 2 Level-2 (USGS/NASA) via Microsoft "
             "Planetary Computer", "area": f"study area {STUDY_AREA}"}
-out = PROC / "landsat_ndvi_monthly_30m.nc"
-ds.to_netcdf(out, encoding={v: {"zlib": True, "complevel": 5} for v in ("ndvi", "nobs")})
+tmp = out.with_suffix(".partial.nc")
+ds.to_netcdf(tmp, encoding={v: {"zlib": True, "complevel": 5} for v in ("ndvi", "nobs")})
+ds.close()
+tmp.replace(out)
 print(out, f"{out.stat().st_size / 1e6:.1f} MB", ds.sizes)

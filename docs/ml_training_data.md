@@ -57,6 +57,25 @@ Group / ID columns, **not features**: `season`, `block_id` (50 × 50 px = 1.5 km
 - Autumn-NDVI columns need the local monthly cube (`landsat_ndvi_monthly_30m.nc`, 150 MB, not in git). Without it,
   the table is built without them.
 
+## First XGBoost results: which decision date (2026-11-14)
+
+The model is scored on unseen seasons (leave-one-season-out). The baseline is the pixel's own 5-year mean, which
+scores RMSE 0.134 for vigour and AUC 0.72 for crop.
+
+| Decision date | 1 Oct – 1 Jan | 1 Feb | 1 Mar | 1 Apr |
+|---|---|---|---|---|
+| Spring vigour RMSE | 0.134–0.136 (no skill) | 0.124 | 0.112 | **0.101** |
+| Crop vs fallow AUC | 0.69–0.71 (no skill) | 0.75 | 0.80 | **0.855** |
+
+- **All the skill comes from the winter NDVI.** Without the `ndvi_*` columns, every date stays at the baseline.
+  Weather, sowing-window and MODIS features add nothing on unseen seasons. They are regional, and spring depends on
+  rain after the decision date.
+- **So the ML engine is an in-season monitor, not a pre-season forecast.** Train one model per decision date
+  (`--as-of 02-01`, `03-01`, `04-01`) and show "which fields look on track / likely fallow", updated monthly from
+  February.
+- **Use leave-one-season-out and a forward split.** Spatial-block CV looks better but misleads: the regional
+  features identify the season.
+
 ## Prediction table (the season in progress)
 
 ```powershell

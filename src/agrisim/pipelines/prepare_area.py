@@ -16,7 +16,7 @@ Steps, in order (all public NASA/USGS data + SoilGrids; Earthdata login from ~/_
     terrain         NASADEM elevation, slope, flow accumulation, LS factor
     imerg           GPM IMERG Final daily per 0.1 deg cell (GES DISC OPeNDAP)
     imerg_late      GPM IMERG Late Run after Final ends .. yesterday (same cells; product kept separate)
-    power           NASA POWER daily at the area centre (1991 .. end of last month)
+    power           NASA POWER daily at the area centre (1991 .. two days ago)
     risk            Environmental Risk Engine v1
     sowing          sowing-window engine v1
     training_table  ML training table (rainfed field pixel x season)
@@ -47,7 +47,7 @@ def last_month_end(today: date | None = None) -> date:
 
 def steps(area, first_year: int, last_year: int, imerg_last: int) -> dict:
     proc = area.data_root / "processed"
-    power_end = last_month_end()
+    power_end = date.today() - timedelta(days=2)   # POWER daily has a latency of ~1-3 days
     dp = REPO / "data_prep"
     return {
         "harmonization": {"done": proc / "landsat_ndvi_harmonization.json", "cmd": None},

@@ -76,7 +76,7 @@ def daily_evidence(data: pd.DataFrame, risk_rules: dict, rules: dict) -> pd.Data
     ev["rain_prior_mm"] = gpm.where(gpm.notna(), pwr)
     ev["rain_source"] = np.where(gpm.notna(), "IMERG", np.where(pwr.notna(), "POWER", "none"))
     ev["smap_surface_prior"] = ci.prior_mean(data["smap_surface_m3m3"], m["smap_window_days"],
-                                             min_valid=m["smap_window_days"])
+                                             min_valid=m.get("smap_min_valid_days", m["smap_window_days"]))
     ev["smap_soil_temp_prior_c"] = ci.prior_mean(data["smap_soil_temp_c"], t["smap_window_days"],
                                                  min_valid=t["smap_window_days"] - 2)
     ev["power_temp_prior_c"] = ci.prior_mean(data["power_temp_c"], t["power_proxy_window_days"])

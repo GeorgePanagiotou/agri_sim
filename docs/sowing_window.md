@@ -72,6 +72,14 @@ Greek winter-cereal season as early October to mid-January. They must be confirm
   | Barley | day 3.5 | day 21 |
   | Lentil | day 0 | day 14 |
 
+## Live season (2026-27, data to 12 Nov 2026)
+
+- **Inputs:** IMERG Late Run to 13 Nov, POWER to 12 Nov, SMAP L4 to 10 Nov (published ~2–3 days late).
+- **SMAP rule:** the surface-moisture value is the mean of the last 3 days *that are available* (at least 1), so
+  the latest weeks are not left without SMAP.
+- **October 2026 was very wet** (~275 mm). The weeks from 1 Nov are check-worthy for the cereals, lentil and
+  vetch–oat. The heavy rain at the end of October gave "too wet: check field access" for 29 Oct.
+
 ## Limitations
 
 - Area-scale rain and moisture; a field after a local storm can differ.

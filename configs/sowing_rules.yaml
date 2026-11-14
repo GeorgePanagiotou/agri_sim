@@ -10,7 +10,8 @@ moisture:
   effective_rain_mm: 20           # >= 20 mm in the last 10 days = an "effective" sowing rain (project_choice,
                                   # adapted from agroclimatic onset rules that use 20 mm, e.g. Sivakumar 1988,
                                   # Agric. For. Meteorol. 42:295-305; past days only, no look-ahead)
-  smap_window_days: 3             # SMAP L4 surface moisture, mean of the last 3 days
+  smap_window_days: 3             # SMAP L4 surface moisture, mean of the last 3 days ...
+  smap_min_valid_days: 1          # ... of those available (SMAP L4 is published ~2-3 days late)
   smap_moist_quantile: 0.5        # moist if >= the Sep-Jun median of the SMAP record we hold (short baseline)
 
 temperature:

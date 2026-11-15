@@ -8,6 +8,13 @@ python -m agrisim.pipelines.prepare_area --name messara --plan                  
 python -m agrisim.pipelines.prepare_area --name messara --steps risk,sowing --force risk
 ```
 
+**From the UI:** the Streamlit app's *Area explorer* page (`app/area_explorer.py`) does the same.
+- Choose a prepared area, or draw a new box and create it.
+- Start or resume its data preparation in the background.
+- See the status of each step, the climate (rain from IMERG Final and scaled Late, plus POWER, via the climate API
+  in `service/`) and the ML training table.
+- The climate API serves every area in `configs/areas/` without a restart ([service/README.md](../service/README.md)).
+
 ## How the area is selected
 
 - `configs/areas/<name>.yaml` holds the box (lon_min, lon_max, lat_min, lat_max), pilot point, CRS, folders and an

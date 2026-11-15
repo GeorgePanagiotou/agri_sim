@@ -8,10 +8,11 @@ RUN pip install -r requirements.txt
 
 COPY app ./app
 
-# /cache = disk cache for live POWER calls (mount a volume to keep it); /data/processed = parquet files (mounted read-only)
-RUN useradd --create-home appuser && mkdir -p /cache /data/processed && chown appuser /cache
+# /cache = disk cache for live POWER calls (mount a volume to keep it)
+# /repo/configs + /repo/data = area registry and area data (mounted read-only, see docker-compose.yml)
+RUN useradd --create-home appuser && mkdir -p /cache /repo/configs /repo/data && chown appuser /cache
 USER appuser
-ENV DATA_DIR=/data/processed CACHE_DIR=/cache POWER_MODE=auto
+ENV REPO_ROOT=/repo CACHE_DIR=/cache POWER_MODE=auto
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \

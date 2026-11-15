@@ -9,9 +9,9 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import Response
 
 from . import harmonize
-from .areas import NAMED_AREAS, AreaError, parse_area
+from .areas import AreaError, named_areas, parse_area, registry
 from .config import get_settings
-from .providers import build_providers
+from .providers import build_providers, imerg, power
 from .variables import VARIABLES
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -20,14 +20,24 @@ app = FastAPI(
     title="AgriSim climate API",
     version="0.1.0",
     description="One endpoint, several sources: NASA POWER and GPM IMERG (and more) on a common daily UTC axis, "
-                "canonical units, WGS84. Use `/v1/series/{variable}`.")
+                "canonical units, WGS84. Use `/v1/series/{variable}`. Areas: `/v1/areas` (from configs/areas).")
+
+
+LOCAL_FILES = (imerg.FINAL, imerg.LATE, imerg.FACTORS)
+
+
+def _local_status(data_dir) -> dict:
+    files = {f: (data_dir / f).exists() for f in LOCAL_FILES}
+    files["power_daily_*.parquet"] = power.local_file(data_dir) is not None
+    return files
 
 
 @app.get("/health", tags=["meta"])
 def health():
     s = get_settings()
-    files = {f: (s.data_dir / f).exists() for f in ("imerg_daily_2001_2025.parquet", "power_daily_1981_2026.parquet")}
-    return {"status": "ok", "power_mode": s.power_mode, "local_files": files}
+    reg = registry(s.repo_root)
+    return {"status": "ok", "power_mode": s.power_mode, "repo_root": str(s.repo_root),
+            "areas": {name: _local_status(a["data_dir"]) for name, a in reg.items()}}
 
 
 @app.get("/v1/variables", tags=["meta"])
@@ -45,8 +55,13 @@ def sources():
 
 @app.get("/v1/areas", tags=["meta"])
 def areas():
-    return {name: {"label": a["label"], **({"bbox": a["bbox"]} if "bbox" in a else {"point": a["point"]})}
-            for name, a in NAMED_AREAS.items()}
+    """Every area name a request may use. Prepared areas come from configs/areas/*.yaml (re-read per call)."""
+    s = get_settings()
+    reg = registry(s.repo_root)
+    return {name: {"label": a["label"], "prepared_area": a["home"],
+                   **({"bbox": a["bbox"]} if "bbox" in a else {"point": a["point"]}),
+                   "local_files": _local_status(reg[a["home"]]["data_dir"])}
+            for name, a in named_areas(s.repo_root).items()}
 
 
 @app.get("/v1/series/{variable}", tags=["data"])
@@ -67,7 +82,7 @@ def series(
         raise HTTPException(404, f"unknown variable {variable!r}; known: {', '.join(VARIABLES)}")
     settings = get_settings()
     try:
-        a = parse_area(area, lon, lat, bbox)
+        a = parse_area(area, lon, lat, bbox, settings.repo_root)
     except AreaError as exc:
         raise HTTPException(422, str(exc)) from None
     if end < start:

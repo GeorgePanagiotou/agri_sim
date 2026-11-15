@@ -6,8 +6,11 @@ services:
     environment:
       POWER_MODE: auto
       CACHE_TTL_HOURS: "24"
+      REPO_ROOT: /repo
     volumes:
-      - ./data/processed:/data/processed:ro
+      # area registry + the data roots it names (data/processed for Evia, data/areas/<name>/processed for others)
+      - ./configs:/repo/configs:ro
+      - ./data:/repo/data:ro
       - climate-cache:/cache
     restart: unless-stopped
 

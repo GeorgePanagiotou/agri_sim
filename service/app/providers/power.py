@@ -1,7 +1,7 @@
 """NASA POWER daily (MERRA-2 meteorology, 0.5 x 0.625 deg), community AG, UTC.
 
-Live REST call (no login) with a disk cache; if the call fails (and POWER_MODE=auto) the local file
-data/processed/power_daily_1981_2026.parquet is used, but only for areas whose centroid is inside the study area.
+Live REST call (no login) with a disk cache; if the call fails (and POWER_MODE=auto) the prepared area's local
+POWER file is used (<data_root>/processed/power_daily_*.parquet), for locations inside a prepared area only.
 POWER cells are far larger than a field: the value is the cell that contains the area centroid.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ from pathlib import Path
 import httpx
 import pandas as pd
 
-from ..areas import NAMED_AREAS, Area
+from ..areas import Area
 from ..config import Settings
 from ..variables import SourceVar
 from .base import Fetched, NoData, ProviderError
@@ -29,9 +29,29 @@ CELL_LON, CELL_LAT = 0.625, 0.5
 FILE = "power_daily_1981_2026.parquet"
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=8)
 def _read(path: str, mtime_ns: int) -> pd.DataFrame:
     return pd.read_parquet(path)
+
+
+def local_file(data_dir: Path) -> Path | None:
+    """The area's POWER daily file: the long Evia record if present, else the newest power_daily_*.parquet."""
+    if (data_dir / FILE).exists():
+        return data_dir / FILE
+    files = sorted(data_dir.glob("power_daily_*.parquet"), key=lambda p: p.stat().st_mtime)
+    return files[-1] if files else None
+
+
+def _verify():
+    """TLS verification through the OS certificate store when truststore is installed (works behind
+    TLS-inspecting proxies / antivirus); otherwise httpx's default (certifi). Verification is never disabled."""
+    try:
+        import ssl
+
+        import truststore
+        return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    except ImportError:
+        return True
 
 
 class PowerProvider:
@@ -97,7 +117,7 @@ class PowerProvider:
         last = "unknown error"
         for attempt in range(max(1, self.s.power_retries)):
             try:
-                with httpx.Client(timeout=self.s.http_timeout, transport=TRANSPORT) as client:
+                with httpx.Client(timeout=self.s.http_timeout, transport=TRANSPORT, verify=_verify()) as client:
                     r = client.get(self.s.power_url, params=params)
                 if r.status_code in (429, 500, 502, 503, 504):
                     last = f"HTTP {r.status_code}"
@@ -136,21 +156,19 @@ class PowerProvider:
 
     # ---- local file ---------------------------------------------------------------------------------------
     def _local(self, var: SourceVar, area: Area, start: date, end: date) -> Fetched:
-        w, s, e, n = NAMED_AREAS["study_area"]["bbox"]
-        if not (w <= area.lon <= e and s <= area.lat <= n):
-            raise NoData("local POWER file only covers the study area (area centroid is outside it)")
-        path = self.s.data_dir / FILE
-        try:
-            df = _read(str(path), path.stat().st_mtime_ns)
-        except FileNotFoundError:
-            raise ProviderError(f"{FILE} not found in DATA_DIR") from None
+        if area.data_dir is None:
+            raise NoData("local POWER files exist only for prepared areas (this location is in none of them)")
+        path = local_file(area.data_dir)
+        if path is None:
+            raise ProviderError(f"no power_daily_*.parquet for area {area.home!r} ({area.data_dir})")
+        df = _read(str(path), path.stat().st_mtime_ns)
         if var.native not in df.columns:
             raise ProviderError(f"{var.native} not in local POWER file")
         series = df.loc[pd.Timestamp(start):pd.Timestamp(end), var.native].astype("float64") * var.factor
         if series.notna().sum() == 0:
             raise NoData(f"local POWER file covers {df.index.min().date()}..{df.index.max().date()}")
         return Fetched(series=series, origin="local", n_cells=1,
-                       method="value of the POWER cell containing the study-area centroid")
+                       method=f"value of the POWER cell at the centroid of prepared area {area.home!r} ({path.name})")
 
     @staticmethod
     def _with_area_note(res: Fetched, area: Area) -> Fetched:

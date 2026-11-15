@@ -6,20 +6,18 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-
-def _find_data_dir() -> Path:
-    """Local runs: walk up from this file and from the current folder until a data/processed with our files shows up."""
+def _find_repo_root() -> Path:
+    """Local runs: walk up from this file and from the current folder to the folder with configs/areas."""
     for start in (Path(__file__).resolve().parent, Path.cwd().resolve()):
         for folder in (start, *start.parents):
-            cand = folder / "data" / "processed"
-            if (cand / "imerg_daily_2001_2025.parquet").exists() or (cand / "power_daily_1981_2026.parquet").exists():
-                return cand
-    return Path("data/processed")  # nothing found: /health will show the files as missing
+            if (folder / "configs" / "areas").is_dir():
+                return folder
+    return Path.cwd()  # nothing found: /health shows no areas
 
 
 @dataclass(frozen=True)
 class Settings:
-    data_dir: Path         # folder with the harmonized parquet files (data/processed)
+    repo_root: Path        # folder with configs/areas/*.yaml and the data roots they name (data/, data/areas/...)
     cache_dir: Path        # disk cache for live POWER calls
     power_mode: str        # auto = live, fall back to local file | live | local
     power_url: str
@@ -35,7 +33,7 @@ def get_settings() -> Settings:
     if mode not in {"auto", "live", "local"}:
         raise ValueError(f"POWER_MODE must be auto, live or local, got {mode!r}")
     return Settings(
-        data_dir=Path(env("DATA_DIR")) if env("DATA_DIR") else _find_data_dir(),
+        repo_root=Path(env("REPO_ROOT")) if env("REPO_ROOT") else _find_repo_root(),
         cache_dir=Path(env("CACHE_DIR", str(Path.home() / ".agrisim_climate_cache"))),
         power_mode=mode,
         power_url=env("POWER_URL", "https://power.larc.nasa.gov/api/temporal/daily/point"),

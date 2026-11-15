@@ -20,9 +20,14 @@ st.set_page_config(
 )
 
 from evia_results import render as render_evia
+from area_explorer import render as render_areas
 
-if st.sidebar.radio("Data source", ["Rebuilt Evia results", "Synthetic demonstration"]) == "Rebuilt Evia results":
+_page = st.sidebar.radio("Data source", ["Rebuilt Evia results", "Area explorer", "Synthetic demonstration"])
+if _page == "Rebuilt Evia results":
     render_evia()
+    st.stop()
+if _page == "Area explorer":
+    render_areas()
     st.stop()
 
 import plotly.express as px

@@ -11,20 +11,43 @@ in `app/variables.py`; nothing downstream knows about native names or units.
 # Docker (from the repo root)
 docker compose up --build            # http://localhost:8000/docs
 
-# local (from the repo root)
-python -m pip install -r service/requirements-dev.txt
+# local: run from service/ (from the repo root, `app` would be the Streamlit folder)
+cd service
+python -m pip install -r requirements-dev.txt   # pins need Python 3.12 (the Docker image);
+                                                 # in the project venv (3.11): pip install fastapi uvicorn httpx
 python -m uvicorn app.main:app --reload
-python -m pytest -q tests
+python -m pytest -q                              # offline tests: fake repo + mocked POWER (tests/test_api.py)
 ```
 
-Docker mounts `data/processed` read-only (IMERG and the POWER fallback come from there) and keeps the live-call cache
-in the `climate-cache` volume.
+Docker mounts `configs/` and `data/` read-only (area registry, IMERG files, POWER fallback) and keeps the live-call
+cache in the `climate-cache` volume. Locally the service finds the repo by walking up to `configs/areas`; set
+`REPO_ROOT` to point elsewhere.
+
+The Streamlit app's **Area explorer** page (`app/area_explorer.py`) uses this API at `AGRISIM_API_URL`
+(default `http://localhost:8000`). When the API is down it runs the same code in-process.
+
+## Areas
+
+Named areas come from the data pipeline's registry, `configs/areas/<name>.yaml`, re-read on every request:
+
+| Name | What |
+|---|---|
+| `<name>` | the area's study box (where its data was downloaded) |
+| `<name>_aoi` | the wider analysis box, if the config has one |
+| `<name>_pilot` | the pilot point |
+| `study_area`, `aoi`, `istiaia_plain`, `mantoudi_valley`, `limni_slope` | older Evia names, kept as aliases |
+
+A new area appears as soon as `python -m agrisim.pipelines.prepare_area --name <name> --bbox W E S N` writes its
+config. IMERG and the POWER fallback come from that area's files once its pipeline steps have run. A `bbox` or
+point inside a prepared study box uses that area's files. Anywhere else, only live POWER answers.
 
 ## Use
 
 ```bash
-# monthly rain, study area, all sources (best first)
-curl "localhost:8000/v1/series/precipitation?area=study_area&start=2021-01-01&end=2021-12-31&aggregate=monthly"
+# monthly rain, Evia study area, all sources (best first); 2025-10 onward = IMERG Late scaled to Final
+curl "localhost:8000/v1/series/precipitation?area=evia&start=2025-01-01&end=2026-10-31&aggregate=monthly"
+# which areas exist (configs/areas) and which local files each has
+curl "localhost:8000/v1/areas"
 # a point, only IMERG, as CSV
 curl "localhost:8000/v1/series/precipitation?lon=23.47&lat=38.80&start=2021-10-01&end=2021-10-31&sources=imerg&format=csv"
 # a bbox (west,south,east,north), POWER first
@@ -50,13 +73,22 @@ resolution, cells used, coverage, notes; `comparison[]` (overlap days, bias, RMS
 
 ## Config (env)
 
-`POWER_MODE` auto (live → local fallback) / live / local · `DATA_DIR` · `CACHE_DIR` · `CACHE_TTL_HOURS` (24) ·
+`POWER_MODE` auto (live → local fallback) / live / local · `REPO_ROOT` · `CACHE_DIR` · `CACHE_TTL_HOURS` (24) ·
 `POWER_RETRIES` (3) · `HTTP_TIMEOUT` (60 s) · `MAX_DAYS` (18300).
 
 ## Limits (honest)
 
-- **IMERG is served from the cached parquet** (lon 23.2–23.6, lat 38.6–39.1, 2001-01-01..2025-09-30): it needs an Earthdata login and GES DISC OPeNDAP is being retired (docs/DATA.md). Outside that extent it answers `no_data`.
-- **POWER live** needs outbound internet; the local fallback only serves areas whose centroid is in the study area.
+- **IMERG is served from each prepared area's files.** No live call: IMERG needs an Earthdata login.
+  - **Final** (gauge-adjusted) covers 2001 to about 3.5 months ago (`imerg_daily_2001_2025.parquet`).
+  - **After that, the Late Run** (`imerg_late_daily.parquet`, refreshed by `data_prep/download_imerg_late.py`).
+    Late is not gauge-adjusted and read 20–50 % wetter than Final over Evia in 2023–2025, so Late days are
+    multiplied by the monthly factors in `imerg_late_to_final.csv` (`data_prep/imerg_late_calibration.py`).
+  - Final always wins where both exist. The `imerg` source notes say from which day Late is used (`final_until`,
+    `late_days`). Treat Late values as provisional.
+  - Outside every prepared area, IMERG answers `no_data`.
+- **POWER live** needs outbound internet. TLS is checked against the OS certificate store when `truststore` is
+  installed (works behind TLS-inspecting proxies); verification is never disabled. The local fallback serves
+  prepared areas only.
 - POWER and IMERG can disagree a lot on single storm days (e.g. 2021-10-09: 76.7 vs 3.4 mm); that is the data, not the service. Use `comparison`.
 
 ## Add a source / variable

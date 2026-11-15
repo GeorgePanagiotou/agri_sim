@@ -102,7 +102,8 @@ def test_location_outside_every_area_has_no_imerg(client):
 def test_unprepared_area_reports_missing_files(client):
     r = client.get("/v1/series/precipitation", params={"area": "other", "start": "2025-09-01",
                                                        "end": "2025-09-02", "sources": "imerg"})
-    assert r.status_code == 502 and "not found" in r.json()["detail"]["sources"]["imerg"]["detail"]
+    imerg = r.json()["detail"]["sources"]["imerg"]
+    assert r.status_code == 404 and imerg["status"] == "no_data" and "not prepared" in imerg["detail"]
 
 
 def test_power_live_with_mock(client, monkeypatch):

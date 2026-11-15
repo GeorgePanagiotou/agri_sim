@@ -84,8 +84,9 @@ class ImergProvider:
             raise NoData("no prepared area contains this location; IMERG is served only for prepared areas "
                          "(python -m agrisim.pipelines.prepare_area --name <name> --bbox ...)")
         final = _load(area.data_dir / FINAL)
-        if final is None:
-            raise ProviderError(f"{FINAL} not found for area {area.home!r} ({area.data_dir})")
+        if final is None:   # area registered but its imerg step has not run yet: not a failure
+            raise NoData(f"area {area.home!r} is not prepared for IMERG yet ({FINAL} missing; run "
+                         f"python -m agrisim.pipelines.prepare_area --name {area.home})")
         sel = _cells(final, area)
         if sel.empty:
             raise NoData(f"no IMERG cells cached for this area; cached extent lon {final.lon.min() - HALF:.2f}.."

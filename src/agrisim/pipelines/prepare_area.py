@@ -87,9 +87,48 @@ def copy_harmonization(area) -> str:
     return "copied from Evia"
 
 
+def _alive(pid: int) -> bool:
+    if os.name == "nt":   # os.kill(pid, 0) would terminate the process on Windows
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
+        return str(pid) in out
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def running(area) -> dict | None:
+    """The live run holding this area's lock ({pid, started, steps}), or None (stale locks are ignored)."""
+    path = area.data_root / "prepare_area.lock"
+    try:
+        info = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return info if _alive(int(info.get("pid", -1))) else None
+
+
 def run(name: str, selected: list[str], force: set[str], first_year: int, last_year: int, imerg_last: int,
         plan: bool) -> list[dict]:
     area = load(name)
+    if not plan:   # one run per area at a time (CLI and the Streamlit Area explorer both start runs)
+        other = running(area)
+        if other and other["pid"] != os.getpid():
+            raise SystemExit(f"Area {name}: a run is already in progress (pid {other['pid']}, since "
+                             f"{other['started']}). Wait for it, or stop that process.")
+        lock = area.data_root / "prepare_area.lock"
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        lock.write_text(json.dumps({"pid": os.getpid(), "started": time.strftime("%Y-%m-%d %H:%M:%S"),
+                                    "steps": selected}), encoding="utf-8")
+        try:
+            return _run(area, selected, force, first_year, last_year, imerg_last, plan)
+        finally:
+            lock.unlink(missing_ok=True)
+    return _run(area, selected, force, first_year, last_year, imerg_last, plan)
+
+
+def _run(area, selected: list[str], force: set[str], first_year: int, last_year: int, imerg_last: int,
+         plan: bool) -> list[dict]:
     plan_steps = steps(area, first_year, last_year, imerg_last)
     env = {**os.environ, "AGRISIM_AREA": area.name, "PYTHONIOENCODING": "utf-8"}
     log_path = area.data_root / "prepare_area_log.json"

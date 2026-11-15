@@ -137,6 +137,17 @@ def box_map(boxes: list[tuple[str, tuple[float, float, float, float], list[int]]
 
 
 # ---------------------------------------------------------------- page
+def _create(name: str, box: tuple[float, float, float, float], label: str | None):
+    """Button callback (runs before the rerun, so it may switch the area picker to the new area)."""
+    try:
+        path = create(name, box, label=label)
+    except (ValueError, FileExistsError) as exc:
+        st.session_state["create_error"] = str(exc)
+        return
+    st.session_state["area_select"] = name
+    st.session_state["created"] = str(path.relative_to(REPO))
+
+
 def new_area_form():
     st.subheader("New area")
     st.caption("Draw a box (WGS84, at most 1° × 1°). The pipeline then downloads Landsat, soil, terrain, IMERG and "
@@ -152,15 +163,10 @@ def new_area_form():
     if e > w and n > s:
         box_map([(label or name or "new area", (w, e, s, n), [37, 99, 235])])
         st.caption(f"{(e - w) * 111 * 0.78:.0f} km × {(n - s) * 111:.0f} km (approx.)")
-    if st.button("Create area", type="primary", disabled=not name):
-        try:
-            path = create(name.strip(), (w, e, s, n), label=label or None)
-        except (ValueError, FileExistsError) as exc:
-            st.error(str(exc))
-        else:
-            st.success(f"Created {path.relative_to(REPO)}. Choose it in the sidebar to start its data preparation.")
-            st.session_state["area_choice"] = name.strip()
-            st.rerun()
+    st.button("Create area", type="primary", disabled=not name, on_click=_create,
+              args=(name.strip(), (w, e, s, n), label or None))
+    if st.session_state.get("create_error"):
+        st.error(st.session_state.pop("create_error"))
     st.code(f"python -m agrisim.pipelines.prepare_area --name {name or '<name>'} --bbox {w} {e} {s} {n}",
             language="powershell")
 
@@ -184,6 +190,9 @@ def render():
         return
     area = load(choice)
     w, e, s, n = area.study_area
+    if st.session_state.get("created"):
+        st.success(f"Created `{st.session_state.pop('created')}`. Start its data preparation below "
+                   "(Data status tab); a full run takes a few hours.")
     st.subheader(area.label)
     st.caption(f"Box {w:.3f}–{e:.3f} E, {s:.3f}–{n:.3f} N · {area.crs} · data in "
                f"`{area.data_root.relative_to(REPO)}`" + (f" · {area.notes}" if area.notes else ""))
@@ -200,8 +209,12 @@ def render():
         done = (table.status == "done").sum()
         st.metric("Pipeline steps done", f"{done} / {len(table)}")
         st.dataframe(table, hide_index=True, width="stretch")
+        live = pa.running(area)
+        if live:
+            st.info(f"Data preparation is running (since {live['started']}, process {live['pid']}). "
+                    "Press Refresh to update the step status.")
         if done < len(table):
-            if st.button("Start / resume data preparation", type="primary",
+            if st.button("Start / resume data preparation", type="primary", disabled=bool(live),
                          help="Runs in the background; finished steps are skipped. Needs Earthdata login (~/_netrc)."):
                 log = start_pipeline(choice)
                 st.success(f"Started. Progress: refresh this page; log `{log.relative_to(REPO)}`.")

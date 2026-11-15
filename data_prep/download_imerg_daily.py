@@ -35,16 +35,25 @@ earthaccess.login(strategy="netrc")
 session = earthaccess.get_requests_https_session()
 
 
-def opendap_url(granule):
-    link = next(u for u in granule.data_links() if u.endswith(".nc4"))
-    path = link.split("/data/", 1)[1]  # GPM_L3/GPM_3IMERGDF.07/YYYY/MM/<file>.nc4
-    return f"https://gpm1.gesdisc.eosdis.nasa.gov/opendap/{path}.ascii?{CE}"
+def opendap_urls(granule) -> list[str]:
+    """Earthdata cloud OPeNDAP first, then the older GES DISC OPeNDAP (being retired; slow / 503 since 2026-11)."""
+    urls = [f"{u['URL']}.ascii?{CE}" for u in granule["umm"].get("RelatedUrls", [])
+            if u.get("Subtype") == "OPENDAP DATA" and u["URL"].startswith("https://opendap.earthdata.nasa.gov/")][:1]
+    link = next((u for u in granule.data_links() if u.endswith(".nc4")), None)
+    if link and "/data/" in link:
+        path = link.split("/data/", 1)[1]  # GPM_L3/GPM_3IMERGDF.07/YYYY/MM/<file>.nc4
+        urls.append(f"https://gpm1.gesdisc.eosdis.nasa.gov/opendap/{path}.ascii?{CE}")
+    return urls
 
 
 def read(granule):
     day = pd.Timestamp(granule["umm"]["TemporalExtent"]["RangeDateTime"]["BeginningDateTime"][:10])
-    url = opendap_url(granule)
+    urls = opendap_urls(granule)
+    err = ValueError("no OPeNDAP link")
     for attempt in range(6):
+        url = urls[min(attempt // 3, len(urls) - 1)] if urls else None   # 3 tries per server
+        if url is None:
+            break
         try:
             r = session.get(url, timeout=60)
             r.raise_for_status()
@@ -58,9 +67,9 @@ def read(granule):
                     rows += [(day, lat, lon, float(v)) for lat, v in zip(lats, m.group(2).split(","))]
             if rows:
                 return pd.DataFrame(rows, columns=["date", "lat", "lon", "precip_mm"])
-        except Exception as exc:  # 503 = GES DISC throttling: back off and retry
+        except Exception as exc:  # 503 = throttling: back off and retry
             err = exc
-            time.sleep(2 ** attempt + 1)
+            time.sleep(2 ** (attempt % 3) + 1)
     print("FAILED", day.date(), type(err).__name__, str(err)[:120], flush=True)
     return None
 

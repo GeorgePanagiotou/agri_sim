@@ -1,7 +1,7 @@
 # Data links for the submission (NASA data · partner and other data)
 
 For the Space Apps project page fields **"NASA Data"** and **"Space Agency Partner & Other Data"**. Every dataset
-the product uses, with where it is used. Details and file formats: [DATA.md](DATA.md). Checked against the
+the product uses, with where it is used. Details and file formats: [docs/DATA.md](docs/DATA.md). Checked against the
 challenge's Resources tab (pulled 2026-11-15) at the end.
 
 ## NASA data (used in the product)

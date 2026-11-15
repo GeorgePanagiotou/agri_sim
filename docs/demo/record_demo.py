@@ -2,7 +2,7 @@
 
 Start the app first:  ..\\.venv\\Scripts\\python -m streamlit run app/streamlit_app.py --server.port 3000
 Then, from agrisim/:   ..\\.venv\\Scripts\\python docs/demo/record_demo.py
-Output: docs/demo/agrisim_demo_30s.mp4 (1920x1080, no sound; add a voice-over in a video editor if wanted).
+Output: agrisim_demo_30s.mp4 in the repo root (1920x1080, no sound; add a voice-over in a video editor if wanted).
 Needs: pip install playwright imageio-ffmpeg; python -m playwright install chromium
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ from playwright.sync_api import Page, sync_playwright
 
 URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:3000"
 HERE = Path(__file__).resolve().parent
-OUT = HERE / "agrisim_demo_30s.mp4"
+OUT = HERE.parents[1] / "agrisim_demo_30s.mp4"   # repo root, next to README.md
 W, H = 1920, 1080
 MAX_SECONDS = 30.0
 

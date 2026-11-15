@@ -94,6 +94,8 @@ optional-cds = [
 dev = [
     { name = "pytest" },
     { name = "ruff" },
+    { name = "xgboost", version = "3.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "xgboost", version = "3.4.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 
 [package.metadata]
@@ -148,6 +150,7 @@ provides-extras = ["app", "api", "ml", "notebooks", "optional-cds", "gpu"]
 dev = [
     { name = "pytest", specifier = ">=8.0" },
     { name = "ruff", specifier = ">=0.9" },
+    { name = "xgboost", specifier = ">=2.1" },
 ]
 
 [[package]]

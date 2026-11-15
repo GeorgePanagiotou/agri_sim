@@ -9,8 +9,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - name: Install testing dependencies without optional GPU packages
-        run: uv sync --group dev
+        # the ml extra (xgboost, lightgbm) is needed by the satellite-proxy model tests
+        run: uv sync --group dev --extra ml
       - name: Run tests
         run: uv run pytest -q
       - name: Compile modules
-        run: uv run python -m compileall -q src app scripts
+        run: uv run python -m compileall -q src app scripts service
+
+  climate-api:
+    # service/ (FastAPI) with the exact pins of its Docker image (Python 3.12)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install API dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Run API tests
+        run: python -m pytest -q

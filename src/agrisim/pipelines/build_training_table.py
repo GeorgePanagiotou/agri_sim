@@ -280,9 +280,12 @@ def build(first_season: int = 2002, last_season: int | None = None, as_of: str =
             months = [m for m in pd.date_range(f"{d.year if d.month >= 9 else d.year - 1}-09-01", d, freq="MS")
                       if m + pd.offsets.MonthEnd(0) < d]
             for m in months:
-                sel = cube.ndvi.sel(time=f"{m:%Y-%m}")
+                try:
+                    sel = cube.ndvi.sel(time=f"{m:%Y-%m}")
+                except KeyError:   # month beyond the cube (e.g. the live season before the cube is extended)
+                    sel = None
                 f[f"ndvi_prior_{m:%b}".lower()] = (decode_ndvi(sel.values[0][px.row, px.col])
-                                                   if sel.sizes["time"] else np.nan)
+                                                   if sel is not None and sel.sizes["time"] else np.nan)
         for k, v in rain_features(table, d).items():
             f[k] = v[cell_idx]
         f["rain_includes_imerg_late"] = float(((late_dates < d) & (late_dates >= d - pd.Timedelta(days=90))).any())

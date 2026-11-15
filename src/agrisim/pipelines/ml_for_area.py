@@ -21,13 +21,19 @@ TABLES = {"11-14": "training_table_1114", "03-01": "training_table_0301"}
 LIVE = ML / "predict_2027_1114.parquet"   # season 2027 = Oct 2026 .. Sep 2027
 
 
+def _stale(path) -> bool:
+    """Missing, or older than the field history it is built from (e.g. after a new season was added)."""
+    history = PROC / "landsat_field_years.nc"
+    return not path.exists() or (history.exists() and path.stat().st_mtime < history.stat().st_mtime)
+
+
 def main(argv=None) -> None:
     ML.mkdir(parents=True, exist_ok=True)
     for as_of, name in TABLES.items():
         path = ML / f"{name}.parquet"
-        if not path.exists():
+        if _stale(path):
             bt.main(["--as-of", as_of, "--out", str(path)])
-    if not LIVE.exists():
+    if _stale(LIVE):
         bt.main(["--predict-season", "2027", "--as-of", "11-14", "--out", str(LIVE)])
     common = ["--input-dir", str(ML), "--output-dir", str(MODELS), "--tasks", "vigour", "crop"]
     tsp.main(["--date", "1114", "--live-2027", *common])

@@ -184,8 +184,9 @@ def main(argv=None):
     p.add_argument("--steps", default="all", help=f"comma list from: {','.join(STEP_ORDER)}")
     p.add_argument("--force", default="", help="comma list of steps to redo even if their output exists")
     p.add_argument("--first-year", type=int, default=1997, help="Landsat cube first year (history for 2002+)")
-    p.add_argument("--last-year", type=int, default=2025)
-    p.add_argument("--imerg-last-year", type=int, default=2025)
+    # current year: the live season needs last season's history (the field map keeps complete seasons only)
+    p.add_argument("--last-year", type=int, default=date.today().year)
+    p.add_argument("--imerg-last-year", type=int, default=date.today().year - 1)   # IMERG Final lags ~3.5 months
     p.add_argument("--plan", action="store_true")
     a = p.parse_args(argv)
     if a.bbox:

@@ -1,0 +1,15 @@
+services:
+  climate-api:
+    build: ./service
+    ports:
+      - "8000:8000"
+    environment:
+      POWER_MODE: auto
+      CACHE_TTL_HOURS: "24"
+    volumes:
+      - ./data/processed:/data/processed:ro
+      - climate-cache:/cache
+    restart: unless-stopped
+
+volumes:
+  climate-cache:

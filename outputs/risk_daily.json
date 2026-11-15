@@ -1,8 +1,8 @@
 {
   "rules": "risk_rules_v1_2026-11-14",
-  "rows": 9448,
+  "rows": 9449,
   "first_day": "2001-01-01",
-  "last_day": "2026-11-13",
+  "last_day": "2026-11-14",
   "reference_periods": {
     "power": [
       1991,
@@ -19,13 +19,13 @@
   },
   "level_counts": {
     "drought": {
-      "none": 6097,
+      "none": 6098,
       "severe": 1308,
       "warning": 1092,
       "watch": 951
     },
     "dry_spell": {
-      "none": 7156,
+      "none": 7157,
       "severe": 1089,
       "warning": 686,
       "watch": 517
@@ -34,22 +34,24 @@
       "none": 8614,
       "watch": 688,
       "warning": 124,
-      "severe": 22
+      "severe": 22,
+      "unknown": 1
     },
     "frost": {
       "none": 9323,
       "watch": 91,
-      "warning": 34
+      "warning": 34,
+      "unknown": 1
     },
     "heavy_rain": {
-      "none": 9129,
+      "none": 9130,
       "watch": 227,
       "warning": 90,
       "severe": 2
     }
   },
   "rain_source_days": {
-    "IMERG": 9358,
+    "IMERG": 9359,
     "POWER": 90
   }
 }

@@ -22,6 +22,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 
 import earthaccess
+
+import earthdata  # login: Settings (env) or ~/.netrc
 import numpy as np
 import pandas as pd
 
@@ -55,7 +57,7 @@ def fetch(start: pd.Timestamp, end: pd.Timestamp) -> None:
         todo.append((year, a, b))
     if not todo:
         return
-    earthaccess.login(strategy="netrc")
+    earthdata.login()
     session = earthaccess.get_requests_https_session()
     for year, a, b in todo:
         granules = earthaccess.search_data(short_name="GPM_3IMERGDL", version="07",

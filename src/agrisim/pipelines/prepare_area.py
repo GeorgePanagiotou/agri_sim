@@ -21,6 +21,7 @@ Steps, in order (all public NASA/USGS data + SoilGrids; Earthdata login from ~/_
     risk            Environmental Risk Engine v1
     sowing          sowing-window engine v1
     training_table  ML training table (rainfed field pixel x season)
+    ml_models       14 Nov / 1 Mar tables, live table, XGBoost vigour + crop models trained on this area
 """
 from __future__ import annotations
 
@@ -38,7 +39,7 @@ from agrisim.area import REPO, create, load
 
 PY = sys.executable
 STEP_ORDER = ["harmonization", "landsat", "field_map", "soil", "terrain", "imerg", "imerg_late", "imerg_late_cal",
-              "power", "risk", "sowing", "training_table"]
+              "power", "risk", "sowing", "training_table", "ml_models"]
 
 
 def last_month_end(today: date | None = None) -> date:
@@ -72,6 +73,8 @@ def steps(area, first_year: int, last_year: int, imerg_last: int) -> dict:
                    "cmd": [PY, "-m", "agrisim.decision_engine.sowing_window"]},
         "training_table": {"done": proc / "ml" / "training_table_v1.parquet",
                            "cmd": [PY, "-m", "agrisim.pipelines.build_training_table"]},
+        "ml_models": {"done": proc / "ml" / "models" / "1114" / "run_manifest.json",
+                      "cmd": [PY, "-m", "agrisim.pipelines.ml_for_area"]},
     }
 
 

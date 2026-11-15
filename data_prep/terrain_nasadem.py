@@ -13,6 +13,8 @@ import heapq
 import zipfile
 
 import earthaccess
+
+import earthdata  # login: Settings (env) or ~/.netrc
 import numpy as np
 import rasterio
 from rasterio.warp import Resampling, reproject
@@ -30,7 +32,7 @@ def tile_name(lon, lat):
 needed = {tile_name(lon, lat) for lon in np.arange(np.floor(W), E, 1.0) for lat in np.arange(np.floor(S), N, 1.0)}
 have = {z.stem.split("_")[-1].lower(): z for z in out_dir.glob("NASADEM_HGT_*.zip")}
 if not needed <= set(have):
-    earthaccess.login(strategy="netrc")
+    earthdata.login()
     res = earthaccess.search_data(short_name="NASADEM_HGT", bounding_box=(W, S, E, N))
     earthaccess.download(res, str(out_dir))
     have = {z.stem.split("_")[-1].lower(): z for z in out_dir.glob("NASADEM_HGT_*.zip")}

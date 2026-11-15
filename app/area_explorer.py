@@ -113,11 +113,140 @@ def start_pipeline(name: str) -> Path:
     log = area.data_root / "logs" / "prepare_area_ui.log"
     log.parent.mkdir(parents=True, exist_ok=True)
     flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    login = st.session_state.get("earthdata")
+    if login:   # this user's Settings login, only for the run they start (never in os.environ, never on disk)
+        env |= {"EARTHDATA_USERNAME": login["user"], "EARTHDATA_PASSWORD": login["password"]}
     with open(log, "a", encoding="utf-8") as fh:
         subprocess.Popen([sys.executable, "-m", "agrisim.pipelines.prepare_area", "--name", name], cwd=REPO,
-                         stdout=fh, stderr=subprocess.STDOUT, creationflags=flags,
-                         env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+                         stdout=fh, stderr=subprocess.STDOUT, creationflags=flags, env=env)
     return log
+
+
+# ---------------------------------------------------------------- settings: NASA Earthdata login
+URS = "https://urs.earthdata.nasa.gov"
+STEP_TIMES = ("Typical run times on a home connection (Messara, 0.2° × 0.1°): Landsat history 1997–2025 2–4 h · "
+              "soil 0.5–1 h · IMERG 0.5 h · IMERG Late calibration 15 min · terrain, POWER, engines, ML tables "
+              "and models a few minutes each.")
+
+
+def _netrc_present() -> bool:
+    """Only checks that the file exists; its content is never read here."""
+    return any((Path.home() / f).exists() for f in ("_netrc", ".netrc"))
+
+
+def _check_login(user: str, password: str) -> bool:
+    try:
+        import ssl
+
+        import truststore
+        verify = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    except ImportError:
+        verify = True
+    r = httpx.get(f"{URS}/api/users/tokens", auth=(user, password), timeout=30, verify=verify)
+    return r.status_code == 200
+
+
+def settings_panel():
+    with st.sidebar.expander("Settings · NASA Earthdata login", expanded=False):
+        login = st.session_state.get("earthdata")
+        if login:
+            st.success(f"Signed in as {login['user']} (this browser session only).")
+            if st.button("Sign out"):
+                st.session_state.pop("earthdata", None)
+                st.rerun()
+        else:
+            st.caption("Needed to download IMERG rainfall and NASADEM terrain for a new area. Free account: "
+                       f"[{URS}/users/new]({URS}/users/new). Kept in this session only; passed to the data run "
+                       "you start, never saved.")
+            with st.form("earthdata_login", clear_on_submit=True):
+                user = st.text_input("Username")
+                password = st.text_input("Password", type="password")
+                if st.form_submit_button("Sign in") and user and password:
+                    try:
+                        ok = _check_login(user, password)
+                    except httpx.HTTPError:
+                        st.error("Could not reach urs.earthdata.nasa.gov.")
+                    else:
+                        if ok:
+                            st.session_state["earthdata"] = {"user": user, "password": password}
+                            st.rerun()
+                        st.error("Earthdata rejected this username / password.")
+        st.caption("Server login file (~/.netrc): " + ("found" if _netrc_present() else "none"))
+
+
+def climate_zone_warning(area):
+    lon, lat = area.pilot
+    if not (30 <= lat <= 46 and -10 <= lon <= 42):
+        st.warning("This area is outside the Mediterranean belt the rules were built for. Crop list, sowing "
+                   "windows (Oct–Dec), the Oct–Sep season and the field-map thresholds come from Greece"
+                   + (" and the Northern Hemisphere" if lat < 0 else "") + ": treat the sowing, risk and "
+                   "crop/fallow results here as untested. The climate data and satellite history are fine.")
+
+
+def sowing_risk_tab(area):
+    sow_f, risk_f = area.outputs / "sowing_weeks.csv", area.outputs / "risk_daily.csv"
+    if not (sow_f.exists() and risk_f.exists()):
+        st.info("No sowing / risk results yet: they are the risk and sowing pipeline steps.")
+        return
+    risk = pd.read_csv(risk_f)
+    last = risk.dropna(subset=["overall_label"]).iloc[-1] if "overall_label" in risk else risk.iloc[-1]
+    st.markdown(f"**Regional risk on {last['date']}** (past-only indicators, IMERG + POWER)")
+    labels = [c for c in risk.columns if c.endswith("_label") and c != "overall_label"]
+    cols = st.columns(len(labels) + 1)
+    cols[0].metric("Overall", str(last.get("overall_label", "")).replace("_", " "))
+    for col, c in zip(cols[1:], labels):
+        col.metric(c.removesuffix("_label").replace("_", " ").capitalize(), str(last[c]).replace("_", " "))
+    sow = pd.read_csv(sow_f)
+    season = sorted(sow.season.unique())[-1]
+    s = sow[sow.season.eq(season)]
+    st.markdown(f"**Sowing screen, season {season}** – weekly verdicts per crop (regional; the farmer decides)")
+    grid = s.pivot_table(index="week_start", columns="crop_id", values="verdict", aggfunc="first")
+    st.dataframe(grid.fillna("").replace({"check_worthy": "✓ check-worthy", "too_dry": "too dry",
+                                          "too_wet": "too wet", "too_cold": "too cold"}), width="stretch")
+    st.caption("check-worthy = worth walking the field; too dry / too wet / too cold = the rule that blocked it; "
+               "unknown = an input is missing (e.g. weeks still ahead).")
+
+
+def ml_dir(area) -> Path:
+    if area.name == "evia" and (REPO / "artifacts" / "satellite_proxy_models" / "1114").exists():
+        return REPO / "artifacts" / "satellite_proxy_models"   # Stylianos's committed Evia models
+    return area.data_root / "processed" / "ml" / "models"
+
+
+def ml_tab(area):
+    base = ml_dir(area)
+    if not (base / "1114" / "run_manifest.json").exists():
+        st.info("No models for this area yet: they are the last pipeline step (ml_models).")
+        return
+    import json
+    rows = []
+    for d, label in (("1114", "14 Nov (now)"), ("0301", "1 Mar")):
+        for task, key, better in (("vigour", "rmse", "lower"), ("crop", "roc_auc", "higher")):
+            f = base / d / f"{task}_forward_metrics.json"
+            if f.exists():
+                m = json.loads(f.read_text(encoding="utf-8"))
+                rows.append({"decision date": label, "target": "spring vigour (RMSE)" if task == "vigour"
+                             else "crop vs fallow (AUC)", "model": round(m["model_on_baseline_rows"][key], 3),
+                             "5-year baseline": round(m["historical_baseline"][key], 3), "better is": better})
+    st.markdown("**Forward test on unseen seasons (trained before 2018, tested 2018+)**")
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+    st.caption("On 14 Nov the model is no better than each field's own 5-year history; skill comes from winter "
+               "satellite greenness (1 Feb – 1 Apr). Targets are Landsat NDVI stand-ins, not farm records.")
+    live = base / "1114" / "crop_live_2027.csv.gz"
+    if live.exists():
+        p = pd.read_csv(live)
+        col = "pred_crop_probability_uncalibrated"
+        p["rgb"] = [[int(255 * (1 - v)), int(160 * v + 60), 60, 200] for v in p[col].clip(0, 1)]
+        p["tip"] = (p[col] * 100).round().astype(int).astype(str) + " % likely cropped"
+        st.markdown("**Season 2027 outlook: probability each 30 m field pixel is cropped (uncalibrated)**")
+        st.pydeck_chart(pdk.Deck(
+            layers=[pdk.Layer("ScatterplotLayer", p, get_position=["lon", "lat"], get_fill_color="rgb",
+                              get_radius=20, pickable=True)],
+            initial_view_state=pdk.ViewState(longitude=float(p.lon.mean()), latitude=float(p.lat.mean()), zoom=10),
+            tooltip={"text": "{tip}"}, map_style="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"))
+        st.caption(f"{len(p):,} rainfed field pixels · mean {p[col].mean():.0%} · green = likely cropped, "
+                   "red = likely fallow. Uncalibrated: read as a ranking, not a probability.")
 
 
 # ---------------------------------------------------------------- map
@@ -185,6 +314,7 @@ def render():
             labels[n_] = n_
     choice = st.sidebar.selectbox("Area", options, index=options.index(default) if default in options else 0,
                                   key="area_select", format_func=lambda o: labels.get(o, o))
+    settings_panel()
     if choice == NEW:
         new_area_form()
         return
@@ -202,8 +332,14 @@ def render():
         boxes.append(("analysis area", (aw, ae, as_, an), [148, 163, 184]))
     boxes.append(("study area (data downloaded)", (w, e, s, n), [37, 99, 235]))
     box_map(boxes, area.pilot)
+    climate_zone_warning(area)
 
-    overview, climate_tab, data_tab = st.tabs(["Data status", "Climate", "ML training data"])
+    overview, climate_tab, sow_tab, data_tab, ml_tab_ = st.tabs(
+        ["Data status", "Climate", "Sowing & risk", "ML training data", "Field outlook (ML)"])
+    with sow_tab:
+        sowing_risk_tab(area)
+    with ml_tab_:
+        ml_tab(area)
     with overview:
         table = status_table(choice)
         done = (table.status == "done").sum()
@@ -214,6 +350,12 @@ def render():
             st.info(f"Data preparation is running (since {live['started']}, process {live['pid']}). "
                     "Press Refresh to update the step status.")
         if done < len(table):
+            st.warning("Preparing an area downloads ~30 years of satellite data and takes a few hours "
+                       "(it runs in the background; finished steps are kept, so it can stop and resume). "
+                       + STEP_TIMES)
+            if not (st.session_state.get("earthdata") or _netrc_present()):
+                st.warning("IMERG and NASADEM need a NASA Earthdata login: sign in under Settings in the sidebar "
+                           "first, or those steps will stop.")
             if st.button("Start / resume data preparation", type="primary", disabled=bool(live),
                          help="Runs in the background; finished steps are skipped. Needs Earthdata login (~/_netrc)."):
                 log = start_pipeline(choice)

@@ -16,6 +16,8 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 
 import earthaccess
+
+import earthdata  # login: Settings (env) or ~/.netrc
 import pandas as pd
 
 from config import PROC, RAW, STUDY_AREA
@@ -31,7 +33,7 @@ LAT0, LAT1 = int(round((S - PAD + 89.95) / 0.1)), int(round((N + PAD + 89.95) / 
 CE = f"precipitation[0:1:0][{LON0}:1:{LON1}][{LAT0}:1:{LAT1}]"
 CACHE = RAW / "imerg_daily"
 CACHE.mkdir(parents=True, exist_ok=True)
-earthaccess.login(strategy="netrc")
+earthdata.login()
 session = earthaccess.get_requests_https_session()
 
 

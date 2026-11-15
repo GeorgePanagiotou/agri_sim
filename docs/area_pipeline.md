@@ -14,6 +14,15 @@ python -m agrisim.pipelines.prepare_area --name messara --steps risk,sowing --fo
 - See the status of each step, the climate (rain from IMERG Final and scaled Late, plus POWER, via the climate API
   in `service/`) and the ML training table.
 - The climate API serves every area in `configs/areas/` without a restart ([service/README.md](../service/README.md)).
+- **Sowing & risk tab:** that area's own risk and sowing engine results.
+- **Field outlook (ML) tab:** the area's own XGBoost models (`ml_models` step, `agrisim.pipelines.ml_for_area`),
+  showing their forward-test scores against the 5-year baselines and the season-2027 crop-probability map.
+- **Earthdata login:** IMERG and NASADEM need one. Sign in under *Settings · NASA Earthdata login* in the sidebar;
+  the login is kept in the browser session only and passed to that run as `EARTHDATA_USERNAME` /
+  `EARTHDATA_PASSWORD` (`data_prep/earthdata.py`). Without it, the server's `~/.netrc` is used.
+- **One run per area at a time:** a lock file `<data_root>/prepare_area.lock` holds the process id.
+- **Outside the Mediterranean** (lat 30–46° N, lon 10° W–42° E) the page warns: the crop rules, sowing windows,
+  Oct–Sep season and field-map thresholds come from Greece.
 
 ## How the area is selected
 

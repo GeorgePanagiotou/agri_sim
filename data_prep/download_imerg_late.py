@@ -18,6 +18,8 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 
 import earthaccess
+
+import earthdata  # login: Settings (env) or ~/.netrc
 import pandas as pd
 
 from config import PROC, RAW, STUDY_AREA
@@ -81,7 +83,7 @@ def main():
         print("Nothing to do: IMERG Final already covers", start.date())
         write_processed()
         return
-    earthaccess.login(strategy="netrc")
+    earthdata.login()
     session = earthaccess.get_requests_https_session()
     granules = earthaccess.search_data(short_name="GPM_3IMERGDL", version="07",
                                        temporal=(start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")))

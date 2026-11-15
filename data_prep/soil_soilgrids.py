@@ -22,7 +22,7 @@ import rasterio.errors
 from rasterio.vrt import WarpedVRT
 from rasterio.warp import Resampling
 
-from config import PROC
+from config import PROC, RAW
 from landsat_common import CRS, HEIGHT, TRANSFORM, WIDTH, profile
 
 URL = "/vsicurl/https://files.isric.org/soilgrids/latest/data/{p}/{p}_{d}_mean.vrt"
@@ -31,14 +31,30 @@ PROPS = {"clay": 10, "sand": 10, "silt": 10, "soc": 10, "bdod": 100, "cfvo": 10,
 DEPTHS = {"0-5cm": 50, "5-15cm": 100, "15-30cm": 150, "30-60cm": 300, "60-100cm": 400}  # thickness mm
 
 
+CACHE = RAW / "soilgrids_30m"   # one warped layer per file, so an interrupted run resumes (git-ignored raw data)
+
+
 def read(prop, depth, tries=5):
-    """Window read of one layer; the remote VRT sometimes fails mid-read ("Cannot read N bytes"), so retry."""
+    """Window read of one layer, cached on disk.
+
+    The remote VRT (~6 MB of XML) sometimes arrives truncated ("Cannot read N bytes"). GDAL would then serve the
+    same broken bytes from its cache, so caching is off for these URLs and each retry fetches again."""
+    path = CACHE / f"{prop}_{depth}.npy"
+    if path.exists():
+        a = np.load(path)
+        if a.shape == (HEIGHT, WIDTH):
+            return a
     for attempt in range(tries):
         try:
-            with rasterio.open(URL.format(p=prop, d=depth)) as src, WarpedVRT(
+            with rasterio.Env(CPL_VSIL_CURL_NON_CACHED="/vsicurl/https://files.isric.org/",
+                              GDAL_HTTP_MAX_RETRY="3", GDAL_HTTP_RETRY_DELAY="5"), \
+                    rasterio.open(URL.format(p=prop, d=depth)) as src, WarpedVRT(
                     src, crs=CRS, transform=TRANSFORM, width=WIDTH, height=HEIGHT, resampling=Resampling.bilinear,
                     src_nodata=src.nodata, nodata=np.nan, dtype="float32") as vrt:
-                return vrt.read(1) / PROPS[prop]
+                a = vrt.read(1) / PROPS[prop]
+            CACHE.mkdir(parents=True, exist_ok=True)
+            np.save(path, a.astype("float32"))
+            return a
         except rasterio.errors.RasterioIOError as err:
             if attempt == tries - 1:
                 raise

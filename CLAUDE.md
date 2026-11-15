@@ -28,7 +28,8 @@ If you need something in another part to change, write it in [docs/TASKS.md](doc
 
 1. **The formats in [docs/DATA.md](docs/DATA.md) are the contract** between data, engine and app. Change them only
    after agreeing, and update the doc in the same commit.
-2. **No database, no separate backend.** The app never calls external APIs at runtime (except base-map tiles).
+2. **No database.** A separate backend is allowed: the climate API in `service/` (FastAPI) may call NASA APIs at
+   runtime (agreed 2026-11-15). The Streamlit app must still work from the committed files when the API is down.
 3. **Explainable first.** Every number the app shows must trace back to a dataset or a cited table. Show uncertainty
    and assumptions; flag what needs local review.
 4. **Keep it simple.** A clear, working demo beats extra features. No feature unless it is in docs/STORY.md.

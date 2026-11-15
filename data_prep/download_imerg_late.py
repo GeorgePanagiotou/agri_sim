@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 import earthaccess
 import pandas as pd
 
-from config import RAW, STUDY_AREA
+from config import PROC, RAW, STUDY_AREA
 
 warnings.filterwarnings("ignore")
 W, E, S, N = STUDY_AREA
@@ -42,9 +42,16 @@ def default_start() -> pd.Timestamp:
 
 def read(session, granule):
     day = pd.Timestamp(granule["umm"]["TemporalExtent"]["RangeDateTime"]["BeginningDateTime"][:10])
-    link = next(u["URL"] for u in granule["umm"]["RelatedUrls"]
-                if u.get("Subtype") == "OPENDAP DATA" and
-                u["URL"].startswith("https://opendap.earthdata.nasa.gov/collections/"))
+    # Earthdata cloud OPeNDAP first; the older GES DISC OPeNDAP path as fallback (it is being retired).
+    link = next((u["URL"] for u in granule["umm"].get("RelatedUrls", [])
+                 if u.get("Subtype") == "OPENDAP DATA" and
+                 u["URL"].startswith("https://opendap.earthdata.nasa.gov/collections/")), None)
+    if link is None:
+        nc4 = next((u for u in granule.data_links() if u.endswith(".nc4")), None)
+        if nc4 is None:
+            print(f"  {day.date()}: no OPeNDAP link", flush=True)
+            return None
+        link = f"https://gpm1.gesdisc.eosdis.nasa.gov/opendap/{nc4.split('/data/', 1)[1]}"
     url = f"{link}.ascii?{CE}"
     for attempt in range(6):
         try:
@@ -72,6 +79,7 @@ def main():
     end = pd.Timestamp(sys.argv[2]) if len(sys.argv) > 2 else pd.Timestamp.today().normalize() - pd.Timedelta(days=1)
     if start > end:
         print("Nothing to do: IMERG Final already covers", start.date())
+        write_processed()
         return
     earthaccess.login(strategy="netrc")
     session = earthaccess.get_requests_https_session()
@@ -93,6 +101,22 @@ def main():
             part = pd.concat([old, part]).drop_duplicates(["date", "lat", "lon"], keep="last")
         part.sort_values(["date", "lat", "lon"]).to_parquet(target, index=False)
         print(f"  {target.name}: {part.date.nunique()} days, {len(part[['lat', 'lon']].drop_duplicates())} cells")
+    write_processed()
+
+
+def write_processed():
+    """All Late quarters in one small processed file (raw Late values; readers apply the Late->Final factors).
+    The climate API serves it, and unlike data/raw it can be committed."""
+    files = sorted(OUT.glob("[12][0-9][0-9][0-9]_Q[1-4].parquet"))
+    if not files:
+        return
+    late = pd.concat(pd.read_parquet(f) for f in files)
+    late["date"] = pd.to_datetime(late["date"]).dt.normalize()
+    late = late.drop_duplicates(["date", "lat", "lon"], keep="last").sort_values(["date", "lat", "lon"])
+    late["product"] = "IMERG_Late_V07"
+    path = PROC / "imerg_late_daily.parquet"
+    late.to_parquet(path, index=False)
+    print(f"  {path.name}: {late.date.min().date()} .. {late.date.max().date()}, {late.date.nunique()} days")
 
 
 if __name__ == "__main__":

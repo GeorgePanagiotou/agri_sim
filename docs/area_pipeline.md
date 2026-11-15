@@ -21,8 +21,19 @@ python -m agrisim.pipelines.prepare_area --name messara --steps risk,sowing --fo
   the login is kept in the browser session only and passed to that run as `EARTHDATA_USERNAME` /
   `EARTHDATA_PASSWORD` (`data_prep/earthdata.py`). Without it, the server's `~/.netrc` is used.
 - **One run per area at a time:** a lock file `<data_root>/prepare_area.lock` holds the process id.
-- **Outside the Mediterranean** (lat 30–46° N, lon 10° W–42° E) the page warns: the crop rules, sowing windows,
-  Oct–Sep season and field-map thresholds come from Greece.
+- **Climate & crop fit** (`agrisim.features.area_fit`): the rules were built for Evia (Csa), so every area gets a
+  verdict at the top of the page.
+  - It uses the Köppen–Geiger class from NASA POWER monthly normals (2001–2025, rules of Beck et al. 2018).
+  - Evia and Messara are **Csa → calibrated**.
+  - Semi-arid winter-rain (BSk / BSh) and cold-winter Mediterranean (Ds*) climates are **partly** calibrated.
+  - Everything else, and the whole **Southern Hemisphere** (reversed seasons), is **not calibrated**.
+  - The tab also shows FAO GAEZ v4 suitability of the five crops: global 5′ rasters in `data/reference/gaez/`,
+    CC BY 4.0. Without POWER it falls back to a lat/lon box check.
+- **Not done yet (ideas):**
+  - Shift the season and sowing windows by six months south of the equator.
+  - Take sowing windows per country from FAO/GEOGLAM crop calendars.
+  - Fit the field-map thresholds per area, and add an irrigation flag from summer NDVI + ECOSTRESS ET.
+  - Burn maps for any area: MODIS MCD64A1 fire dates, then Landsat dNBR.
 
 ## How the area is selected
 

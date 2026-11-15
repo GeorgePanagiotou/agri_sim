@@ -4,6 +4,7 @@ data pipeline for a new area.
 """
 from __future__ import annotations
 
+import calendar
 import importlib
 import importlib.util
 import os
@@ -175,13 +176,61 @@ def settings_panel():
         st.caption("Server login file (~/.netrc): " + ("found" if _netrc_present() else "none"))
 
 
+@st.cache_data(ttl=86400, show_spinner=False)
+def area_fit(name: str) -> dict | None:
+    from agrisim.features import area_fit as af
+    try:
+        return af.assess(load(name))
+    except Exception:  # noqa: BLE001 - POWER unreachable etc.: fall back to the simple box check
+        return None
+
+
 def climate_zone_warning(area):
+    fit = area_fit(area.name)
+    if fit:
+        msg = f"**Climate {fit['koppen']} – {fit['name']}.** {fit['explanation']}"
+        {"calibrated": st.success, "partly": st.warning}.get(fit["fit"], st.error)(msg)
+        return
     lon, lat = area.pilot
     if not (30 <= lat <= 46 and -10 <= lon <= 42):
         st.warning("This area is outside the Mediterranean belt the rules were built for. Crop list, sowing "
                    "windows (Oct–Dec), the Oct–Sep season and the field-map thresholds come from Greece"
                    + (" and the Northern Hemisphere" if lat < 0 else "") + ": treat the sowing, risk and "
                    "crop/fallow results here as untested. The climate data and satellite history are fine.")
+
+
+def fit_tab(area):
+    fit = area_fit(area.name)
+    if not fit:
+        st.info("Climate normals unavailable (NASA POWER not reachable).")
+        return
+    n = fit["normals"]
+    months = list(calendar.month_abbr[1:])
+    a, b = st.columns(2)
+    rain = go.Figure(go.Bar(x=months, y=n["precip_mm"], marker_color=COLORS["imerg"], name="precipitation"))
+    rain.update_layout(title="Monthly precipitation normal", yaxis_title="mm", height=280,
+                       margin=dict(l=10, r=10, t=45, b=10))
+    temp = go.Figure(go.Scatter(x=months, y=n["temp_c"], mode="lines+markers", name="temperature",
+                                line=dict(color=COLORS["power"], width=2), marker=dict(size=8)))
+    temp.update_layout(title="Monthly mean temperature normal", yaxis_title="°C", height=280,
+                       margin=dict(l=10, r=10, t=45, b=10))
+    a.plotly_chart(rain, width="stretch")
+    b.plotly_chart(temp, width="stretch")
+    st.caption(f"{n['source']}; {n['period']}. Köppen–Geiger rules of Beck et al. (2018). "
+               f"{fit['winter_rain_share']:.0%} of the rain falls in the cool half-year.")
+    g = fit["gaez"]
+    if g:
+        crops = sorted(g, key=lambda c: g[c]["pilot"] or -1)
+        bars = go.Figure(go.Bar(y=crops, x=[(g[c]["pilot"] or 0) / 100 for c in crops], orientation="h",
+                                marker_color="#16A34A", text=[f"{(g[c]['pilot'] or 0) / 100:.0f}" for c in crops],
+                                textposition="outside",
+                                hovertext=[f"best cell in the box: {(g[c]['box_max'] or 0) / 100:.0f}" for c in crops]))
+        bars.update_layout(title="Crop suitability at the pilot point (FAO GAEZ v4, rainfed, low input)",
+                           xaxis=dict(title="suitability index (0–100)", range=[0, 110]), height=300,
+                           margin=dict(l=10, r=10, t=45, b=10))
+        st.plotly_chart(bars, width="stretch")
+        st.caption("GAEZ v4 (FAO & IIASA, CC BY 4.0), 1981–2010 climate, 5-arc-minute cells (~9 km): a regional "
+                   "screen of which crops the climate and soil allow, not a field recommendation.")
 
 
 def sowing_risk_tab(area):
@@ -334,8 +383,11 @@ def render():
     box_map(boxes, area.pilot)
     climate_zone_warning(area)
 
-    overview, climate_tab, sow_tab, data_tab, ml_tab_ = st.tabs(
-        ["Data status", "Climate", "Sowing & risk", "ML training data", "Field outlook (ML)"])
+    overview, fit_tab_, climate_tab, sow_tab, data_tab, ml_tab_ = st.tabs(
+        ["Data status", "Climate & crop fit", "Recent climate", "Sowing & risk", "ML training data",
+         "Field outlook (ML)"])
+    with fit_tab_:
+        fit_tab(area)
     with sow_tab:
         sowing_risk_tab(area)
     with ml_tab_:

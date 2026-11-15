@@ -4,6 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agrisim-ai"
+license = { text = "Apache-2.0" }
 version = "0.3.0"
 description = "AgriSim AI: approved Earth observation data and explainable crop-rotation decision support"
 readme = "README.md"

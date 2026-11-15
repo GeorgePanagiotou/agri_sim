@@ -1,0 +1,24 @@
+{
+  "source": "FAO GAEZ v4",
+  "url": "https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/suLr_whe.tif",
+  "crop": "wheat",
+  "scenario": "rainfed_historical_low_input",
+  "kind": "suitability-index",
+  "download_utc": "2026-11-14T16:12:22.188616+00:00",
+  "site": {
+    "id": "evia_pilot",
+    "lat": 38.7592,
+    "lon": 23.43232
+  },
+  "crs": "EPSG:4326",
+  "resolution": [
+    0.08333333333333333,
+    0.08333333333333333
+  ],
+  "bands": 1,
+  "pilot_value_raw": [
+    8070.0
+  ],
+  "nodata": -9.0,
+  "warning": "Raw raster value is not an interpreted suitability score: consult the exact FAO codebook."
+}

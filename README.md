@@ -7,6 +7,7 @@ A modular, **non-MobileNet** decision-support prototype for rainfed crop rotatio
 - **30-second demo video:** [agrisim_demo_30s.mp4](agrisim_demo_30s.mp4). It is recorded from the real app (no
   mock-ups) with [docs/demo/record_demo.py](docs/demo/record_demo.py).
 - **All NASA and partner data links:** [DATA_LINKS.md](DATA_LINKS.md).
+- **Project summary and details:** [SUBMISSION.md](SUBMISSION.md).
 - **Latest team status:** [STATUS_2026-11-15.md](STATUS_2026-11-15.md).
 - **Run the app:**
   ```powershell

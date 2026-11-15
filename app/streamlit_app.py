@@ -9,8 +9,16 @@ import html
 import re
 from datetime import date
 
+import sys
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
+
+# Hosted copies (e.g. Streamlit Community Cloud) may not install the package: find src/agrisim next to app/.
+_SRC = Path(__file__).resolve().parents[1] / "src"
+if _SRC.is_dir() and str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
 st.set_page_config(
     page_title="AgriSim AI | Application & Outputs",

@@ -23,6 +23,11 @@ from agrisim.area import AREAS_DIR, REPO, create, load
 from agrisim.pipelines import prepare_area as pa
 
 API_URL = os.environ.get("AGRISIM_API_URL", "http://localhost:8000").rstrip("/")
+# Hosted demo (Streamlit Community Cloud runs from /mount/src, or set AGRISIM_HOSTED=1): view prepared areas only;
+# no new areas and no data runs (hours of downloads on a small, temporary disk).
+HOSTED = os.environ.get("AGRISIM_HOSTED") == "1" or Path.cwd().as_posix().startswith("/mount/src")
+HOSTED_NOTE = ("This is the hosted demo: it shows the areas prepared in the repository. To prepare a new area, run "
+               "the app on your own computer (see README).")
 NEW = "+ New area (draw a box)"
 COLORS = {"imerg": "#2563EB", "power": "#D97706"}   # blue / orange: distinct for colour-blind readers too
 SOURCE_LABEL = {"imerg": "GPM IMERG (0.1°)", "power": "NASA POWER (0.5°)"}
@@ -328,6 +333,10 @@ def _create(name: str, box: tuple[float, float, float, float], label: str | None
 
 def new_area_form():
     st.subheader("New area")
+    if HOSTED:
+        st.info(HOSTED_NOTE)
+        st.code("python -m agrisim.pipelines.prepare_area --name <name> --bbox W E S N", language="powershell")
+        return
     st.caption("Draw a box (WGS84, at most 1° × 1°). The pipeline then downloads Landsat, soil, terrain, IMERG and "
                "POWER for it and builds the risk, sowing and ML tables. A full run takes a few hours.")
     c1, c2 = st.columns(2)
@@ -401,7 +410,10 @@ def render():
         if live:
             st.info(f"Data preparation is running (since {live['started']}, process {live['pid']}). "
                     "Press Refresh to update the step status.")
-        if done < len(table):
+        if done < len(table) and HOSTED:
+            st.info(HOSTED_NOTE + " Steps marked 'to do' here use large files that stay out of git (e.g. the "
+                                  "130 MB Landsat cube); their results are committed.")
+        elif done < len(table):
             st.warning("Preparing an area downloads ~30 years of satellite data and takes a few hours "
                        "(it runs in the background; finished steps are kept, so it can stop and resume). "
                        + STEP_TIMES)

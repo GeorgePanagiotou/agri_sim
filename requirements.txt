@@ -1,3 +1,6 @@
+# the agrisim package itself (src/agrisim) with its core dependencies from pyproject.toml
+.
+xgboost
 requests
 truststore
 earthaccess

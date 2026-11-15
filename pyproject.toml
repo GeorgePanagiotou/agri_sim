@@ -32,6 +32,11 @@ dependencies = [
   "pyyaml>=6.0",
   "scikit-learn>=1.5",
   "joblib>=1.4",
+  # the Streamlit app (hosted installs, e.g. Streamlit Community Cloud, read pyproject/uv.lock without extras)
+  "streamlit>=1.40",
+  "plotly>=5.20",
+  "pydeck>=0.9",
+  "httpx>=0.27",
 ]
 
 [project.optional-dependencies]

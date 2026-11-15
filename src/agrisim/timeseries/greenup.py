@@ -138,8 +138,8 @@ def pelt_breaks(d: pd.DataFrame, *,min_side: int=2,penalty: float=3.0,
     try:
         import ruptures as rpt
     except ImportError as exc:
-        raise RuntimeError('PELT requires ruptures. Run `uv sync` in Agrisimfinal, '
-                           'then `uv run python -m pipeline.phenology --method pelt`.') from exc
+        raise RuntimeError('PELT requires ruptures. Install it with `uv add ruptures`, '
+                           'then run `uv run python -m agrisim.timeseries.greenup --method pelt`.') from exc
     sm = smooth_group(d,window_days,max_gap_days)
     if len(sm) < 2*min_side:
         return []
@@ -158,8 +158,24 @@ def analyze_group(group:pd.DataFrame,min_observations=6,min_side=2,
     if group.empty:
         raise ValueError('Empty field-season group')
     d=quality_dates(group)
+    # Diagnostic counts are attached to every outcome, even when the detector
+    # cannot run. Acquisitions are not synonymous with quality-filtered dates.
+    intervals = d.date_utc.diff().dt.days.dropna()
+    bounded_pairs = int(((intervals >= 1) & (intervals <= max_gap_days)).sum())
+    # A potential transition requires >= min_side observations on BOTH sides
+    # of a gap no longer than max_gap_days. Without one, no negative detection
+    # claim can be made, regardless of the total observation count.
+    candidate_gaps = [i for i in range(min_side, len(d)-min_side+1)
+                      if 1 <= (d.iloc[i].date_utc-d.iloc[i-1].date_utc).days <= max_gap_days]
     common=dict(field_id=str(group.iloc[0].field_id),season=str(group.iloc[0].season),
                 source=str(group.iloc[0].source),n_clear_dates=len(d),
+                n_raw_acquisitions=len(group),
+                n_quality_rejected_acquisitions=max(0,len(group)-len(d)),
+                first_clear_date=(str(d.iloc[0].date_utc.date()) if len(d) else None),
+                last_clear_date=(str(d.iloc[-1].date_utc.date()) if len(d) else None),
+                largest_clear_gap_days=(int(intervals.max()) if len(intervals) else None),
+                n_bounded_clear_pairs=bounded_pairs,
+                n_candidate_transition_gaps=len(candidate_gaps),
                 method=('pelt_savgol' if method=='pelt' else 'heuristic'),
                 pelt_breaks='[]',savgol_window_days=(savgol_window_days if method=='pelt' else None))
     empty={'last_low_date':None,'first_high_date':None,
@@ -167,6 +183,8 @@ def analyze_group(group:pd.DataFrame,min_observations=6,min_side=2,
            'ndvi_change':np.nan,'evi2_change':np.nan}
     if len(d)<max(min_observations,2*min_side):
         return {**common,'status':'insufficient_clear_dates',**empty}
+    if not candidate_gaps:
+        return {**common,'status':'insufficient_temporal_coverage',**empty}
     if method=='pelt':
         cuts=pelt_breaks(d,min_side=min_side,penalty=pelt_penalty,
                          window_days=savgol_window_days,max_gap_days=max_gap_days)

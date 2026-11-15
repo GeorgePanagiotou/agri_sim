@@ -98,20 +98,26 @@ def test_era5_cds_bbox_and_official_fao_only():
     validate_source('https://gaez-v4-data.fao.org/example.tif')
 
 
-def test_fusion_keeps_all_rotations_without_inventing_scores():
-    from agrisim.decision_engine.fusion import fuse
-    sow=pd.DataFrame({'field_id':['f1'],'candidate_week_start':['2024-11-11'],
-                      'sowing_screen':['candidate_for_field_check']})
-    risk=pd.DataFrame({'field_id':['f1'],'candidate_week_start':['2024-11-11'],
-                       'risk_level':['low_flags'],'risk_flag_count':[0]})
-    rot=pd.DataFrame({'strategy_id':['A','B'],'rotation':['wheat','vetch'],
-                      'candidate_crop':['wheat','vetch'],
-                      'evidence_status':['needs_local_inputs']*2,
-                      'relative_priority_score':[np.nan,np.nan],'priority_rank':[pd.NA,pd.NA]})
-    result=fuse(sow,risk,rot)
-    assert len(result)==2
-    assert result.decision_priority.eq('lower_regional_warning_but_verify_field').all()
-    assert result.relative_priority_score.isna().all()
+def test_old_recommendation_command_uses_regional_engine(tmp_path, monkeypatch):
+    from agrisim.pipelines import generate_recommendations
+
+    monkeypatch.setattr(generate_recommendations, "OUTPUTS", tmp_path)
+    pd.DataFrame([{
+        "crop_id": "winter_wheat", "season": "2024-2025", "week_start": "2024-11-11",
+        "verdict": "check_worthy", "verdict_long_record": "check_worthy",
+        "explanation": "Recent rain supports a field check.",
+    }]).to_csv(tmp_path / "sowing_weeks.csv", index=False)
+    pd.DataFrame([{
+        "date": "2024-11-11", "field_id": "evia_pilot", "overall_level": 0,
+        "overall_label": "none", "hazards_unknown": "",
+        "spatial_support": "regional_context_not_field_measurement",
+    }]).to_csv(tmp_path / "risk_daily.csv", index=False)
+    output = tmp_path / "decision.csv"
+    generate_recommendations.main(["--skip-vegetation", "--output", str(output)])
+    result = pd.read_csv(output)
+    assert result.decision_priority.tolist() == ["candidate_for_field_check"]
+    assert result.component_c_rotation_status.tolist() == ["conditional_phase_comparison"]
+    assert output.with_suffix(".json").is_file()
 
 
 def test_valid_hls_archive_to_greenup_csv_offline():

@@ -42,8 +42,10 @@ def default_start() -> pd.Timestamp:
 
 def read(session, granule):
     day = pd.Timestamp(granule["umm"]["TemporalExtent"]["RangeDateTime"]["BeginningDateTime"][:10])
-    link = next(u for u in granule.data_links() if u.endswith(".nc4"))
-    url = f"https://gpm1.gesdisc.eosdis.nasa.gov/opendap/{link.split('/data/', 1)[1]}.ascii?{CE}"
+    link = next(u["URL"] for u in granule["umm"]["RelatedUrls"]
+                if u.get("Subtype") == "OPENDAP DATA" and
+                u["URL"].startswith("https://opendap.earthdata.nasa.gov/collections/"))
+    url = f"{link}.ascii?{CE}"
     for attempt in range(6):
         try:
             r = session.get(url, timeout=60)

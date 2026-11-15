@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="850" height="570" viewBox="0 0 850 570">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="105" y="39" fill="#202b35" font-family="Arial,sans-serif" font-size="23" font-weight="bold">Crop presence: rolling-origin reliability</text>
+<text x="105" y="67" fill="#586b79" font-family="Arial,sans-serif" font-size="13">Season-forward evaluation only; satellite-derived proxy crop labels</text>
+<line x1="105" y1="120.00" x2="820" y2="120.00" stroke="#e7edf1"/>
+<line x1="105.00" y1="120" x2="105.00" y2="470" stroke="#e7edf1"/>
+<text x="92" y="124.00" text-anchor="end" fill="#687881" font-family="Arial" font-size="12">1.00</text>
+<text x="105.00" y="494" text-anchor="middle" fill="#687881" font-family="Arial" font-size="12">0.00</text>
+<line x1="105" y1="190.00" x2="820" y2="190.00" stroke="#e7edf1"/>
+<line x1="248.00" y1="120" x2="248.00" y2="470" stroke="#e7edf1"/>
+<text x="92" y="194.00" text-anchor="end" fill="#687881" font-family="Arial" font-size="12">0.80</text>
+<text x="248.00" y="494" text-anchor="middle" fill="#687881" font-family="Arial" font-size="12">0.20</text>
+<line x1="105" y1="260.00" x2="820" y2="260.00" stroke="#e7edf1"/>
+<line x1="391.00" y1="120" x2="391.00" y2="470" stroke="#e7edf1"/>
+<text x="92" y="264.00" text-anchor="end" fill="#687881" font-family="Arial" font-size="12">0.60</text>
+<text x="391.00" y="494" text-anchor="middle" fill="#687881" font-family="Arial" font-size="12">0.40</text>
+<line x1="105" y1="330.00" x2="820" y2="330.00" stroke="#e7edf1"/>
+<line x1="534.00" y1="120" x2="534.00" y2="470" stroke="#e7edf1"/>
+<text x="92" y="334.00" text-anchor="end" fill="#687881" font-family="Arial" font-size="12">0.40</text>
+<text x="534.00" y="494" text-anchor="middle" fill="#687881" font-family="Arial" font-size="12">0.60</text>
+<line x1="105" y1="400.00" x2="820" y2="400.00" stroke="#e7edf1"/>
+<line x1="677.00" y1="120" x2="677.00" y2="470" stroke="#e7edf1"/>
+<text x="92" y="404.00" text-anchor="end" fill="#687881" font-family="Arial" font-size="12">0.20</text>
+<text x="677.00" y="494" text-anchor="middle" fill="#687881" font-family="Arial" font-size="12">0.80</text>
+<line x1="105" y1="470.00" x2="820" y2="470.00" stroke="#e7edf1"/>
+<line x1="820.00" y1="120" x2="820.00" y2="470" stroke="#e7edf1"/>
+<text x="92" y="474.00" text-anchor="end" fill="#687881" font-family="Arial" font-size="12">0.00</text>
+<text x="820.00" y="494" text-anchor="middle" fill="#687881" font-family="Arial" font-size="12">1.00</text>
+<text x="462.50" y="530" text-anchor="middle" fill="#243744" font-family="Arial" font-size="14">Mean predicted probability</text>
+<text x="28" y="295.0" text-anchor="middle" transform="rotate(-90 28 295.0)" fill="#243744" font-family="Arial" font-size="14">Observed crop frequency</text>
+<line x1="105.00" y1="470.00" x2="820.00" y2="120.00" stroke="#a5a5a5" stroke-width="2" stroke-dasharray="5,6"/>
+<polyline points="143.6,431.1 222.8,385.7 288.3,356.8 356.3,311.6 425.6,275.1 499.0,218.9 571.6,177.8 639.0,167.4 719.7,136.5 787.5,126.5" fill="none" stroke="#3559ba" stroke-width="2.2"/>
+<circle cx="143.63" cy="431.11" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="222.81" cy="385.74" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="288.25" cy="356.82" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="356.31" cy="311.57" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="425.64" cy="275.15" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="499.01" cy="218.91" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="571.63" cy="177.77" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="639.04" cy="167.41" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="719.71" cy="136.52" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="787.48" cy="126.48" r="4.5" fill="#3559ba" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="105" cy="554" r="5" fill="#3559ba"/>
+<text x="115" y="558" fill="#344956" font-family="Arial" font-size="12">Raw</text>
+<polyline points="149.7,420.0 222.5,381.5 285.3,348.7 355.7,287.5 428.0,259.6 496.0,209.7 569.9,168.8 643.1,163.6 719.5,133.3 788.5,126.5" fill="none" stroke="#008675" stroke-width="2.2"/>
+<circle cx="149.68" cy="420.00" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="222.48" cy="381.52" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="285.31" cy="348.71" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="355.69" cy="287.52" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="427.96" cy="259.65" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="495.97" cy="209.68" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="569.95" cy="168.80" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="643.10" cy="163.63" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="719.54" cy="133.27" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="788.50" cy="126.50" r="4.5" fill="#008675" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="283" cy="554" r="5" fill="#008675"/>
+<text x="293" y="558" fill="#344956" font-family="Arial" font-size="12">Sigmoid</text>
+<polyline points="131.1,435.0 226.6,387.3 290.2,351.7 352.7,292.4 448.2,252.5 507.5,196.9 568.8,167.7 648.6,161.7 722.0,134.9 801.7,125.2" fill="none" stroke="#d18e16" stroke-width="2.2"/>
+<circle cx="131.08" cy="435.00" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="226.61" cy="387.32" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="290.16" cy="351.67" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="352.73" cy="292.41" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="448.21" cy="252.49" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="507.51" cy="196.88" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="568.83" cy="167.67" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="648.61" cy="161.67" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="722.04" cy="134.91" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="801.69" cy="125.20" r="4.5" fill="#d18e16" stroke="#ffffff" stroke-width="1.3"/>
+<circle cx="461" cy="554" r="5" fill="#d18e16"/>
+<text x="471" y="558" fill="#344956" font-family="Arial" font-size="12">Isotonic</text>
+</svg>

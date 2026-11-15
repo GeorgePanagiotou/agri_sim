@@ -1,0 +1,157 @@
+{
+  "evaluation_type": "rolling_origin_forward_season_prequential",
+  "feature_variant": "dynamic_fire",
+  "excluded_future_fire_features": [],
+  "model_status": "experiment ONLY; no production model re-calibrated or replaced",
+  "date_code": "0301",
+  "decision_date": "03-01",
+  "area": "evia",
+  "training_table_rows": 122183,
+  "evaluation_rows": 4911,
+  "calibration_seasons_per_fold": 3,
+  "nominal_interval_coverage": 0.8,
+  "cqr_method": "max of per-calibration-season empirical conformity quantiles; offset clamped >=0",
+  "probability_methods": [
+    "raw",
+    "sigmoid",
+    "isotonic"
+  ],
+  "reliability_bins": 10,
+  "parameters": {
+    "start_season": 2026,
+    "end_season": 2026,
+    "estimators": 350,
+    "device": "cpu",
+    "seed": 42,
+    "minimum_training_seasons": 6
+  },
+  "aggregate_metrics": {
+    "ndvi": {
+      "point": {
+        "rmse": 0.10400609563380626,
+        "mae": 0.08161994677118167
+      },
+      "raw": {
+        "coverage": 0.5153736509875789,
+        "mean_width": 0.18033646555957666
+      },
+      "conformal": {
+        "coverage": 0.9179393198941153,
+        "mean_width": 0.34511660548267237
+      }
+    },
+    "crop": {
+      "raw": {
+        "brier": 0.16898704570822543,
+        "roc_auc": 0.7971493078637288
+      },
+      "sigmoid": {
+        "brier": 0.1570493417527157,
+        "roc_auc": 0.7971493078637288
+      },
+      "isotonic": {
+        "brier": 0.15826711981112088,
+        "roc_auc": 0.7965205040419105
+      }
+    }
+  },
+  "macro_mean_metrics_by_season": {
+    "ndvi_cqr_coverage": 0.9179393198941153,
+    "ndvi_cqr_mean_width": 0.34511660548267237,
+    "crop_raw_brier": 0.16898704570822543,
+    "crop_sigmoid_brier": 0.1570493417527157,
+    "crop_isotonic_brier": 0.15826711981112088
+  },
+  "seasons_below_nominal_cqr": [],
+  "per_season_win_counts": {
+    "cqr_seasons_at_or_above_nominal": 1,
+    "crop_sigmoid_brier_better_than_raw": 1,
+    "crop_isotonic_brier_better_than_raw": 1,
+    "total_evaluation_seasons": 1
+  },
+  "method_performance_notes": "No method selected based on these test results; if changing the method, use new unseen seasons or nested tuning",
+  "folds": [
+    {
+      "test_season": 2026,
+      "train_seasons": [
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+      ],
+      "calibration_seasons": [
+        2023,
+        2024,
+        2025
+      ],
+      "features": [
+        "burn_class_2021",
+        "soil_clay_pct_0_30",
+        "soil_sand_pct_0_30",
+        "soil_silt_pct_0_30",
+        "soil_soc_gkg_0_30",
+        "soil_bdod_gcm3_0_30",
+        "soil_cfvo_pct_0_30",
+        "soil_ph_0_30",
+        "soil_nitrogen_gkg_0_30",
+        "soil_awc_mm_0_30",
+        "soil_awc_mm_0_100",
+        "soil_rusle_k",
+        "terrain_elevation_m",
+        "terrain_slope_deg",
+        "terrain_upslope_cells",
+        "terrain_ls_factor",
+        "terrain_upslope_burned_share",
+        "burn_dnbr_2021",
+        "hist_class_lag1",
+        "hist_class_lag2",
+        "hist_class_lag3",
+        "hist_peak_lag1",
+        "hist_peak_lag2",
+        "hist_crop_share_5y",
+        "hist_peak_mean_5y",
+        "hist_years_since_fallow",
+        "ndvi_prior_sep",
+        "ndvi_prior_oct",
+        "ndvi_prior_nov",
+        "ndvi_prior_dec",
+        "ndvi_prior_jan",
+        "ndvi_prior_feb",
+        "post_fire"
+      ],
+      "dropped_all_missing_training_features": [],
+      "cqr_offset": 0.08239006996154785,
+      "calibration_season_quantiles": {
+        "2023": 0.08239006996154785,
+        "2024": 0.017009317874908447,
+        "2025": 0.010233283042907715
+      }
+    }
+  ],
+  "limitations": [
+    "Satellite-derived crop/NDVI proxy labels, not validated farm outcomes",
+    "Later-season data influenced historic pseudo-label thresholds; residual hindsight leakage remains",
+    "Pixel observations within seasons are spatially dependent: pooled scores are not independent field trials",
+    "Historical modern soil layers may be anachronistic for early seasons",
+    "CQR uses season-wise maximum correction; no distribution-free future-season 80% guarantee under climate shift",
+    "April NDVI includes March observations of the target spring period (in-season monitoring)",
+    "Previously saved production models trained through 2026 are not calibrated by this experiment"
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "bundle_type": "2027_satellite_proxy_staging",
+  "prediction_season": 2027,
+  "decision_date": "03-01",
+  "date_code": "0301",
+  "area": "evia",
+  "fit_seasons": [
+    2002,
+    2003,
+    2004,
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+  ],
+  "calibration_seasons": [
+    2024,
+    2025,
+    2026
+  ],
+  "features": [
+    "soil_clay_pct_0_30",
+    "soil_sand_pct_0_30",
+    "soil_silt_pct_0_30",
+    "soil_soc_gkg_0_30",
+    "soil_bdod_gcm3_0_30",
+    "soil_cfvo_pct_0_30",
+    "soil_ph_0_30",
+    "soil_nitrogen_gkg_0_30",
+    "soil_awc_mm_0_30",
+    "soil_awc_mm_0_100",
+    "soil_rusle_k",
+    "terrain_elevation_m",
+    "terrain_slope_deg",
+    "terrain_upslope_cells",
+    "terrain_ls_factor",
+    "hist_class_lag1",
+    "hist_class_lag2",
+    "hist_class_lag3",
+    "hist_peak_lag1",
+    "hist_peak_lag2",
+    "hist_crop_share_5y",
+    "hist_peak_mean_5y",
+    "hist_years_since_fallow",
+    "ndvi_prior_sep",
+    "ndvi_prior_oct",
+    "ndvi_prior_nov",
+    "ndvi_prior_dec",
+    "ndvi_prior_jan",
+    "ndvi_prior_feb",
+    "post_fire"
+  ],
+  "feature_policy": "fixed_no_fire_2021_severity",
+  "excluded_fire_features": [
+    "burn_class_2021",
+    "burn_dnbr_2021",
+    "terrain_upslope_burned_share"
+  ],
+  "crop_probability_method": "sigmoid",
+  "calibration_method_selection": "retrospective 2018-2026 rolling evaluation; not prospectively validated",
+  "nominal_interval_coverage": 0.8,
+  "conformal_offset_ndvi": 0.0069525837898254395,
+  "conformal_season_quantiles": {
+    "2024": 0.00017875432968139648,
+    "2025": -0.0023931264877319336,
+    "2026": 0.0069525837898254395
+  },
+  "calibration_set_diagnostics_NOT_independent_test": {
+    "crop": {
+      "raw": {
+        "brier": 0.17328487841866932,
+        "auc": 0.7911742602154651
+      },
+      "sigmoid": {
+        "brier": 0.1678342105858596,
+        "auc": 0.7911742602154651
+      },
+      "isotonic": {
+        "brier": 0.16690093993809868,
+        "auc": 0.7927714935500931
+      }
+    },
+    "vigour_conformal_coverage": 0.8192493042829023,
+    "vigour_conformal_mean_width": 0.23275685736674734
+  },
+  "model_versions": {
+    "xgboost": "3.2.0",
+    "sklearn": "1.9.1"
+  },
+  "training_table_sha256": "036ed46531a767b2b3c806587d646639de9874314bf36298f487047e6de3367f",
+  "metadata_sha256": "5dd58df9a74eac79407d01be20b47a11fa332ce1a5fcfe4c4e8773c198979d1c",
+  "models": {
+    "vigour": "vigour_xgb.json",
+    "crop": "crop_xgb.json",
+    "vigour_q10": "vigour_q10_xgb.json",
+    "vigour_q90": "vigour_q90_xgb.json"
+  },
+  "limitations": [
+    "Satellite-derived proxy labels; NOT verified farmer-reported crop outcomes or yields",
+    "April uses March NDVI from within the spring peak target window (in-season monitoring)",
+    "Calibration scores are on the calibration seasons, not independent test results",
+    "Historical pseudo-label definitions have residual hindsight leakage",
+    "Historical rolling comparisons informed method choice; new unseen seasons required to verify",
+    "80% marginal interval coverage is a target, not a future-season guarantee",
+    "This self-contained model is DIFFERENT from existing models trained through 2026",
+    "No 2027 predictions exist until a matching dated 2027 table is generated"
+  ]
+}

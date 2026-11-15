@@ -69,13 +69,19 @@ def read_hls_batch(batch:Path, parcels:Path|None=None):
     for archive in archives:
         field_id=archive.parent.parent.name
         with np.load(archive,allow_pickle=False) as z:
-            if tuple(z['bands'].tolist()) != HLS_BANDS:
+            native_bands=tuple(z['bands'].tolist())
+            if native_bands not in (HLS_BANDS,('B03','B04','NIR_narrow_B05_or_B8A')):
                 raise ValueError(f'Unexpected HLS band sequence in {archive}')
             if z['reflectance'].shape[0]!=len(z['dates']):
                 raise ValueError(f'Archive date count mismatch: {archive}')
             granules = z['granules'].astype(str)
-            if not all(g.startswith('HLS.L30.') and g.endswith('.v2.0') for g in granules):
-                raise ValueError('Only NASA Landsat HLSL30 v2.0 accepted in HLS pipeline')
+            if not all(g.startswith(('HLS.L30.','HLS.S30.')) and g.endswith('.v2.0') for g in granules):
+                raise ValueError('Only NASA HLSL30/HLSS30 v2.0 accepted in HLS pipeline')
+            sources=z['sources'].astype(str) if 'sources' in z.files else np.array(['NASA_HLSL30_v2']*len(granules))
+            if any((g.startswith('HLS.L30.') and src!='NASA_HLSL30_v2') or
+                   (g.startswith('HLS.S30.') and src!='NASA_HLSS30_v2')
+                   for g,src in zip(granules,sources)):
+                raise ValueError('HLS source provenance conflicts with granule')
             mask = z['candidate_mask'].astype(bool)
             spatial='provisional_center_3x3'
             if parcels:
@@ -85,7 +91,7 @@ def read_hls_batch(batch:Path, parcels:Path|None=None):
                 spatial='verified_polygon_supplied' # provenance, not independently validated by script
             for i,dt in enumerate(z['dates'].astype(str)):
                 arr=z['reflectance'][i]
-                row=stats(field_id,dt,'NASA_HLSL30_v2',spatial,arr[0],arr[1],arr[2],z['clear'][i],mask,
+                row=stats(field_id,dt,sources[i],spatial,arr[0],arr[1],arr[2],z['clear'][i],mask,
                           granule=str(granules[i]),resolution_m=30)
                 if row: rows.append(row)
     return pd.DataFrame(rows)

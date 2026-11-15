@@ -67,15 +67,23 @@ measurements.
 If the smoke test reports `EulaNotAccepted`, review any outstanding agreements
 and authorized apps in your Earthdata account and retry after approval.
 
-## Main pipeline (after downloading NASA data)
+## Run the Evia decision engine
+
+To combine the saved weekly sowing checks, daily regional hazards and Evia pilot green-up history, run this from the repository root.
 
 ```powershell
-uv run python -m agrisim.pipelines.analyze_vegetation --hls-batch data/processed/evia_sowing/hls_batches/YOUR_BATCH --method pelt
-uv run python -m agrisim.pipelines.generate_recommendations --skip-vegetation
-uv run --extra app streamlit run app/streamlit_app.py
+uv run python -m agrisim.decision_engine.pipeline --sowing-csv outputs/sowing_weeks.csv --risk-csv outputs/risk_daily.csv
 ```
 
-Data preparation writes to `data/processed/features`, while outputs go to `outputs`. A verified field boundary is required to call any image statistics **parcel-level**. Your initial location is a provisional 3×3 satellite footprint only.
+The default outputs are `outputs/decision_engine_bd.csv` and its JSON summary. Use `--crop winter_wheat`, `--season 2026-2027`, or `--as-of 2026-11-15` to narrow the result. Each row gives a crop-week field-check action with its supporting evidence. The older command `agrisim.pipelines.generate_recommendations` accepts the same options.
+
+With the full local POWER, IMERG and SMAP L4 source caches, run `uv run python -m agrisim.decision_engine.sowing_window` to regenerate the weekly, seasonal and reliability tables. To recompute both sowing and risk directly from those caches, run `uv run python -m agrisim.decision_engine.pipeline`.
+
+The engine reads `data/processed/features/vegetation_observations.csv` automatically. Use `--vegetation-csv PATH` for another observation export. To rebuild the observations from a dated Evia HLS batch, run `uv run python -m agrisim.pipelines.analyze_vegetation --hls-batch PATH --method pelt`. The HLS downloader records NASA CMR revision timestamps. Older batches without those timestamps require refreshed catalog metadata to contribute to historical decisions.
+
+At each week’s start (00:00 UTC), the engine selects pilot acquisitions whose observations and catalog revisions predate that cutoff. For overlapping tiles it waits for the latest revision used in the daily selection. It reruns the NDVI/EVI2 green-up detector on the visible dates. The output reports earlier seasons assessed, seasons with a detected transition, the most recent interval and current-season clear-date coverage. A candidate field visit uses the interval to guide a ground-cover check. Regional weather rules determine the sowing verdict and hazard priority. The satellite evidence covers the provisional 90 m footprint and has no verified crop identity.
+
+The Streamlit application (`uv run --extra app streamlit run app/streamlit_app.py`) opens the rebuilt Evia assessments from `outputs/evia_sowing_with_rotation.csv`. Select a season, crop and week in the sidebar. The synthetic demonstration is available separately.
 
 ## Project layout
 

@@ -1,0 +1,56 @@
+{
+  "model": {
+    "rows": 44199,
+    "accuracy": 0.7520984637661485,
+    "macro_f1": 0.6877050104425483
+  },
+  "historical_baseline": {
+    "rows": 44199,
+    "accuracy": 0.70569469897509,
+    "macro_f1": 0.5157860529481804
+  },
+  "model_on_baseline_rows": {
+    "rows": 44199,
+    "accuracy": 0.7520984637661485,
+    "macro_f1": 0.6877050104425483
+  },
+  "trained_on_seasons_through": 2017,
+  "evaluated_from_season": 2018,
+  "production_model_trained_through": 2026,
+  "production_features": [
+    "burn_class_2021",
+    "soil_clay_pct_0_30",
+    "soil_sand_pct_0_30",
+    "soil_silt_pct_0_30",
+    "soil_soc_gkg_0_30",
+    "soil_bdod_gcm3_0_30",
+    "soil_cfvo_pct_0_30",
+    "soil_ph_0_30",
+    "soil_nitrogen_gkg_0_30",
+    "soil_awc_mm_0_30",
+    "soil_awc_mm_0_100",
+    "soil_rusle_k",
+    "terrain_elevation_m",
+    "terrain_slope_deg",
+    "terrain_upslope_cells",
+    "terrain_ls_factor",
+    "terrain_upslope_burned_share",
+    "burn_dnbr_2021",
+    "hist_class_lag1",
+    "hist_class_lag2",
+    "hist_class_lag3",
+    "hist_peak_lag1",
+    "hist_peak_lag2",
+    "hist_crop_share_5y",
+    "hist_peak_mean_5y",
+    "hist_years_since_fallow",
+    "ndvi_prior_sep",
+    "ndvi_prior_oct",
+    "ndvi_prior_nov",
+    "ndvi_prior_dec",
+    "ndvi_prior_jan",
+    "ndvi_prior_feb",
+    "ndvi_prior_mar",
+    "post_fire"
+  ]
+}

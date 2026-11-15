@@ -1,7 +1,7 @@
 """AgriSim AI | Application & Outputs demonstration.
 
 Start: uv run --extra app streamlit run app/streamlit_app.py
-This is a SYNTHETIC proof of concept. No model predictions or real parcel assessments.
+Rebuilt Evia assessments and an optional synthetic demonstration.
 """
 from __future__ import annotations
 
@@ -10,22 +10,29 @@ import re
 from datetime import date
 
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-import pydeck as pdk
 import streamlit as st
-
-from demo_data import (
-    FIELDS, SEASONS, CROPS, CROP_RULES,
-    make_environment, rank_sowing_windows, rank_rotations,
-    report_markdown, risk_level, risk_scores,
-)
 
 st.set_page_config(
     page_title="AgriSim AI | Application & Outputs",
     page_icon="🌱",
     layout="wide",
     initial_sidebar_state="expanded",
+)
+
+from evia_results import render as render_evia
+
+if st.sidebar.radio("Data source", ["Rebuilt Evia results", "Synthetic demonstration"]) == "Rebuilt Evia results":
+    render_evia()
+    st.stop()
+
+import plotly.express as px
+import plotly.graph_objects as go
+import pydeck as pdk
+
+from demo_data import (
+    FIELDS, SEASONS, CROPS, CROP_RULES,
+    make_environment, rank_sowing_windows, rank_rotations,
+    report_markdown, risk_level, risk_scores,
 )
 
 # Streamlit's native theme settings cannot currently be switched from Python.

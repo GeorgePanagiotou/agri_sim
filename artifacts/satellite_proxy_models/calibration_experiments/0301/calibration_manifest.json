@@ -1,0 +1,110 @@
+{
+  "evaluation_type": "strictly_forward_train_calibrate_evaluate",
+  "model_status": "experimental; not a calibrated replacement for production models",
+  "date_code": "0301",
+  "decision_date": "03-01",
+  "area": "evia",
+  "train_seasons": [
+    2002,
+    2003,
+    2004,
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013
+  ],
+  "calibration_seasons": [
+    2014,
+    2015,
+    2016,
+    2017
+  ],
+  "evaluation_seasons": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "features": [
+    "soil_clay_pct_0_30",
+    "soil_sand_pct_0_30",
+    "soil_silt_pct_0_30",
+    "soil_soc_gkg_0_30",
+    "soil_bdod_gcm3_0_30",
+    "soil_cfvo_pct_0_30",
+    "soil_ph_0_30",
+    "soil_nitrogen_gkg_0_30",
+    "soil_awc_mm_0_30",
+    "soil_awc_mm_0_100",
+    "soil_rusle_k",
+    "terrain_elevation_m",
+    "terrain_slope_deg",
+    "terrain_upslope_cells",
+    "terrain_ls_factor",
+    "hist_class_lag1",
+    "hist_class_lag2",
+    "hist_class_lag3",
+    "hist_peak_lag1",
+    "hist_peak_lag2",
+    "hist_crop_share_5y",
+    "hist_peak_mean_5y",
+    "hist_years_since_fallow",
+    "ndvi_prior_sep",
+    "ndvi_prior_oct",
+    "ndvi_prior_nov",
+    "ndvi_prior_dec",
+    "ndvi_prior_jan",
+    "ndvi_prior_feb",
+    "post_fire"
+  ],
+  "dropped_all_missing_features": [
+    "burn_class_2021",
+    "burn_dnbr_2021",
+    "terrain_upslope_burned_share"
+  ],
+  "nominal_interval_coverage": 0.8,
+  "conformal_method": "maximum_of_per_calibration_season_empirical_coverage_quantiles",
+  "conformal_offset_ndvi": 0.017097175121307373,
+  "calibration_season_offsets": {
+    "2014": 0.007188141345977783,
+    "2015": -0.008723855018615723,
+    "2016": -0.0005316883325576782,
+    "2017": 0.017097175121307373
+  },
+  "results": {
+    "vigour": {
+      "point": {
+        "rmse": 0.09884610302014445,
+        "mae": 0.07465693071174737
+      },
+      "raw_interval_coverage": 0.7407859906332722,
+      "raw_mean_width": 0.21858470796238752,
+      "cqr_interval_coverage": 0.8192040543903708,
+      "cqr_mean_width": 0.2527790582050023
+    },
+    "crop": {
+      "raw_brier": 0.15473380439560816,
+      "calibrated_brier": 0.15548274281130903,
+      "raw_roc_auc": 0.7988763726899648,
+      "calibrated_roc_auc": 0.7983765591671813
+    }
+  },
+  "limitations": [
+    "Satellite-derived proxy targets; no independent farm labels or crop yield validation",
+    "Future seasons and 2026 seasonal shifts may violate exchangeability; 80% is a target, not a guarantee",
+    "Nearby pixels are correlated; group-based offset is conservative but not distribution-free for nonstationary seasons",
+    "Historic class thresholds were defined with later-season data; residual label hindsight remains",
+    "Static soil layers might not represent conditions in early historical seasons",
+    "These models were fitted only through the training cutoff; existing production models must NOT be calibrated with these saved artifacts"
+  ]
+}

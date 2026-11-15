@@ -9,6 +9,9 @@ the window start. Each week is judged with what was known at its start (complete
     check_worthy  none of the above: worth walking the field; the farmer decides
     unknown       an input is missing
 
+Historical SMAP thresholds use earlier observed Sep-Jun days only (expanding baseline).
+Earlier years with no SMAP history fall back to rainfall; no future records leak into the verdict.
+
 Two verdicts per week: `verdict` uses all evidence available (SMAP for the seasons we hold), `verdict_long_record`
 uses only IMERG + POWER so every season since 2001 is judged the same way; reliability statistics use the latter.
 Regional data (IMERG ~10 km, SMAP ~9 km, POWER ~50 km): the verdict describes the area, never the seedbed itself.
@@ -80,10 +83,25 @@ def daily_evidence(data: pd.DataFrame, risk_rules: dict, rules: dict) -> pd.Data
     ev["smap_soil_temp_prior_c"] = ci.prior_mean(data["smap_soil_temp_c"], t["smap_window_days"],
                                                  min_valid=t["smap_window_days"] - 2)
     ev["power_temp_prior_c"] = ci.prior_mean(data["power_temp_c"], t["power_proxy_window_days"])
+    # Historical look-ahead safeguard: the original implementation calculated one
+    # median from the ENTIRE SMAP file (including seasons after the candidate week).
+    # An as-of date may use only *earlier completed* SMAP observations, and a short
+    # baseline is not an independently verified soil-moisture threshold.
     sm = data["smap_surface_m3m3"]
-    season_days = sm[(sm.index.month >= 9) | (sm.index.month <= 6)].dropna()
-    ev["smap_moist_threshold"] = float(season_days.quantile(m["smap_moist_quantile"])) if len(season_days) else np.nan
-    ev["smap_baseline_days"] = len(season_days)
+    eligible = (sm.index.month >= 9) | (sm.index.month <= 6)
+    prior_seasonal_smap = sm.where(eligible).shift(1)
+    min_baseline = int(m.get("smap_min_baseline_days", 14))
+    if min_baseline < 1:
+        raise ValueError("smap_min_baseline_days must be positive")
+    ev["smap_moist_threshold"] = prior_seasonal_smap.expanding(
+        min_periods=min_baseline
+    ).quantile(float(m["smap_moist_quantile"]))
+    ev["smap_baseline_days"] = prior_seasonal_smap.notna().cumsum()
+    ev["smap_threshold_status"] = np.where(
+        ev["smap_baseline_days"] >= min_baseline,
+        "past_only_expanding_sep_jun_short_baseline_not_climatology",
+        "insufficient_prior_smap_baseline",
+    )
     levels = er.levels(er.indicators(data, risk_rules), risk_rules)
     ev["heavy_rain_level"] = levels["heavy_rain"]
     ev["drought_level"] = levels["drought"]
@@ -111,7 +129,9 @@ def judge(weeks: pd.DataFrame, ev: pd.DataFrame, windows: pd.DataFrame, rules: d
     w["temp_used_c"] = temp
     w["temp_source"] = np.where(w["smap_soil_temp_prior_c"].notna(), "SMAP_L4_soil_0_5cm",
                                 np.where(w["power_temp_prior_c"].notna(), "POWER_air_2m_proxy", "none"))
-    w["evidence_mode"] = np.where(smap_known, "imerg_smap", "imerg_power")
+    w["evidence_mode"] = np.where(smap_known,
+                                  w["rain_source"].str.lower() + "_smap",
+                                  w["rain_source"].str.lower() + "_power")
     known = (rain_known | smap_known) & (~has_rule | temp.notna()) & w["heavy_rain_level"].notna()
     w["verdict"] = _verdict(known, has_rule & (temp < tmin), ~(rain_ok | smap_moist), wet)
 
@@ -123,9 +143,12 @@ def judge(weeks: pd.DataFrame, ev: pd.DataFrame, windows: pd.DataFrame, rules: d
     def text(r):
         parts = [f"rain last {m['rain_window_days']} days {r.rain_prior_mm:.0f} mm ({r.rain_source}; effective "
                  f">= {m['effective_rain_mm']} mm)" if pd.notna(r.rain_prior_mm) else "rain unknown"]
-        if pd.notna(r.smap_surface_prior):
+        if pd.notna(r.smap_surface_prior) and pd.notna(r.smap_moist_threshold):
             parts.append(f"SMAP surface moisture {r.smap_surface_prior:.3f} m3/m3 (moist >= "
-                         f"{r.smap_moist_threshold:.3f}, Sep-Jun median)")
+                         f"{r.smap_moist_threshold:.3f}, past-only expanding Sep-Jun median; "
+                         f"{int(r.smap_baseline_days)} earlier days)")
+        elif pd.notna(r.smap_surface_prior):
+            parts.append("SMAP moisture available but no adequate earlier baseline; it is not used")
         if pd.notna(r.tsoil_min_c):
             parts.append(f"soil temp {r.temp_used_c:.1f} C ({r.temp_source}; crop minimum {r.tsoil_min_c:.1f} C)"
                          if pd.notna(r.temp_used_c) else "soil temperature unknown")

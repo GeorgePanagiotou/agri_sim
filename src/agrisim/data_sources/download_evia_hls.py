@@ -40,13 +40,31 @@ else:
     from .hls_fields import Site, choose_dates, coverage, interior_pixels, read_parcels, read_windows
 
 API = "https://planetarycomputer.microsoft.com/api"
-BANDS = ("B03", "B04", "B05", "Fmask")
+BANDS = ("B03", "B04", "B05", "Fmask")  # L30 legacy order
+SENSORS = ("L30", "S30")
+
+def bands_for(granule: str) -> tuple[str, str, str, str]:
+    """Use matched narrow-NIR for harmonized L30/S30 indices.
+
+    S30 B05 is red edge, NOT NIR. The correct S30 narrow NIR is B8A.
+    """
+    if granule.startswith("HLS.L30."):
+        return ("B03", "B04", "B05", "Fmask")
+    if granule.startswith("HLS.S30."):
+        return ("B03", "B04", "B8A", "Fmask")
+    raise ValueError(f"Unsupported HLS granule: {granule}")
+
+
+def sensor_of(granule: str) -> str:
+    return "L30" if granule.startswith("HLS.L30.") else "S30" if granule.startswith("HLS.S30.") else "unknown"
+
 BATCH_LABEL_COLUMNS = [
     "array_index",
     "field_id",
     "date_utc",
     "season",
     "granule",
+    "sensor",
     "candidate_clear_pixels",
     "candidate_pixels",
     "context_file",
@@ -61,11 +79,12 @@ BATCH_LABEL_COLUMNS = [
 ]
 
 
-def catalog(site, periods=SOWING_SEASONS):
+def catalog(site, periods=SOWING_SEASONS, *, sensor="L30"):
+    if sensor not in SENSORS: raise ValueError("Unknown HLS sensor")
     by_id = {}
     for start, end in periods:
         params = {
-            "collections": "hls2-l30",
+            "collections": f"hls2-{sensor.lower()}",
             "limit": 250,
             "intersects": json.dumps({"type": "Point", "coordinates": [site.lon, site.lat]}),
             "datetime": f"{start}T00:00:00Z/{end}T23:59:59Z",
@@ -82,13 +101,14 @@ def catalog(site, periods=SOWING_SEASONS):
     return sorted(by_id.values(), key=lambda f: f["id"])
 
 
-def official_catalog(site, features, periods=SOWING_SEASONS):
+def official_catalog(site, features, periods=SOWING_SEASONS, *, sensor="L30"):
+    if sensor not in SENSORS: raise ValueError("Unknown HLS sensor")
     rows = []
     for start, end in periods:
         page = 1
         while True:
             params = {
-                "short_name": "HLSL30",
+                "short_name": f"HLS{sensor}",
                 "version": "2.0",
                 "point": f"{site.lon},{site.lat}",
                 "page_size": 500,
@@ -103,7 +123,8 @@ def official_catalog(site, features, periods=SOWING_SEASONS):
             response.raise_for_status()
             result = response.json()
             rows.extend(
-                (item["umm"]["GranuleUR"], item["meta"]["concept-id"]) for item in result["items"]
+                (item["umm"]["GranuleUR"], item["meta"]["concept-id"], item["meta"]["revision-date"])
+                for item in result["items"]
             )
             if page * params["page_size"] >= result["hits"]:
                 break
@@ -111,7 +132,7 @@ def official_catalog(site, features, periods=SOWING_SEASONS):
                 raise RuntimeError("Incomplete NASA catalog page")
             page += 1
     frame = (
-        pd.DataFrame(rows, columns=["granule", "nasa_concept_id"])
+        pd.DataFrame(rows, columns=["granule", "nasa_concept_id", "available_utc"])
         .drop_duplicates()
         .sort_values("granule")
     )
@@ -152,15 +173,25 @@ def storage(href):
     return url.hostname.split(".")[0], url.path.split("/")[1]
 
 
-def online_features(site, periods):
-    features = catalog(site, periods)
-    ids = official_catalog(site, features, periods).set_index("granule")["nasa_concept_id"]
-    for f in features:
-        f["nasa_concept_id"] = ids[f["id"]]
-    return features
+def online_features(site, periods, sensors=("L30",)):
+    combined=[]
+    for sensor in sensors:
+        if sensor not in SENSORS:
+            raise ValueError(f"Unknown HLS sensor {sensor!r}")
+        features=catalog(site, periods, sensor=sensor)
+        verified=official_catalog(site, features, periods, sensor=sensor)
+        records=verified.set_index("granule").to_dict("index")
+        for f in features:
+            if f["id"] not in records:
+                continue  # Only cross-verified NASA and mirror records are selected
+            if sensor_of(f["id"]) != sensor:
+                raise ValueError("Catalog sensor disagrees with granule ID")
+            f.update(records[f["id"]])
+            combined.append(f)
+    return sorted(combined,key=lambda f:(f["properties"]["datetime"],f["id"]))
 
 
-def cached_features(site, periods):
+def cached_features(site, periods, sensors=("L30",)):
     """Read signed-URL-free acquisition metadata from old manifests or new raw-clip tags."""
     legacy = {}
     batches = PROC / "evia_sowing" / "hls_batches"
@@ -179,7 +210,9 @@ def cached_features(site, periods):
             )
             legacy.update(records.set_index("granule").to_dict("index"))
     features = []
-    for path in sorted(site.directory(RAW).glob("HLS.L30.*.v2.0.tif")):
+    paths = [path for sensor in sensors for path in
+             site.directory(RAW).glob(f"HLS.{sensor}.*.v2.0.tif")]
+    for path in sorted(paths):
         scene = path.stem
         # The day is also present in the HLS granule ID, including in pre-existing clips.
         day = datetime.strptime(scene.split(".")[3][:7], "%Y%j").date().isoformat()
@@ -194,6 +227,7 @@ def cached_features(site, periods):
             {
                 "id": scene,
                 "nasa_concept_id": row["nasa_concept_id"],
+                "available_utc": row.get("available_utc"),
                 "properties": {
                     "datetime": row["acquired_utc"],
                     "platform": row.get("platform", ""),
@@ -207,7 +241,7 @@ def checked_clip(path, site):
     with rasterio.open(path) as ds:
         x, y = transform("EPSG:4326", ds.crs, [site.lon], [site.lat])
         if (
-            ds.descriptions != BANDS
+            ds.descriptions != bands_for(path.stem)
             or ds.shape != (site.size, site.size)
             or ds.index(x[0], y[0]) != (site.size // 2, site.size // 2)
         ):
@@ -271,12 +305,13 @@ def write_clip(feature, site, grid, bands):
             compress="deflate",
         ) as ds:
             ds.write(np.stack(bands))
-            ds.descriptions = BANDS
+            ds.descriptions = bands_for(scene)
             ds.update_tags(
                 granule=scene,
                 acquired_utc=feature["properties"]["datetime"],
                 platform=feature["properties"].get("platform") or "",
                 nasa_concept_id=feature["nasa_concept_id"],
+                available_utc=feature.get("available_utc") or "",
                 scale_B03_B04_B05="0.0001",
                 fill_reflectance="-9999",
                 fill_Fmask="255",
@@ -302,7 +337,7 @@ def download_scene(feature, sites, tokens):
                 GDAL_HTTP_RETRY_DELAY="1",
                 CPL_LOG="NUL",
             ):
-                for name in BANDS:
+                for name in bands_for(feature["id"]):
                     href = feature["assets"][name]["href"].split("?")[0]
                     with rasterio.open(href + "?" + tokens[storage(href)]) as src:
                         if not np.allclose(src.res, (30, 30)):
@@ -362,7 +397,7 @@ def fetch_missing(by_site, workers, cached_only):
     if not jobs:
         print("All selected field windows are already cached.", flush=True)
         return
-    containers = {storage(f["assets"][band]["href"]) for f, _ in jobs.values() for band in BANDS}
+    containers = {storage(f["assets"][band]["href"]) for f, _ in jobs.values() for band in bands_for(f["id"])}
     tokens = {}
     for account, container in containers:
         response = requests.get(f"{API}/sas/v1/token/{account}/{container}", timeout=35)
@@ -394,8 +429,11 @@ def collect_fields(
     parcels=None,
     cached_only=False,
     plan_only=False,
+    sensors=("L30",),
 ):
     """Download selected windows and return a new training batch directory, or preview its plan."""
+    if not set(sensors).issubset(set(SENSORS)) or not sensors:
+        raise ValueError("Use L30 and/or S30 sensors")
     if not 1 <= workers <= 8 or (max_dates is not None and max_dates < 1):
         raise ValueError("Use 1-8 workers and a positive max_dates, or None for all dates")
     requests_by_site = read_windows(Path(fields_csv), size)
@@ -408,7 +446,7 @@ def collect_fields(
     by_site, selections = {}, {}
     for site, windows in requests_by_site.items():
         periods = [(w.start, w.end) for w in windows]
-        features = cached_features(site, periods) if cached_only else online_features(site, periods)
+        features = cached_features(site, periods, sensors) if cached_only else online_features(site, periods, sensors)
         all_days = {f["properties"]["datetime"][:10] for f in features}
         keep = set()
         for w in windows:
@@ -536,7 +574,7 @@ def prepare(features, site, out=None, published_dir=None, geometry=None):
     for f in features:
         scene = f["id"]
         with rasterio.open(site.directory(RAW) / f"{scene}.tif") as ds:
-            if ds.descriptions != BANDS or ds.shape != (site.size, site.size):
+            if ds.descriptions != bands_for(scene) or ds.shape != (site.size, site.size):
                 raise ValueError(f"Unexpected clip layout: {scene}")
             current = (ds.crs.to_string(), tuple(ds.transform)[:6])
             if grid is None:
@@ -565,16 +603,18 @@ def prepare(features, site, out=None, published_dir=None, geometry=None):
         row = {
             "date_utc": date,
             "acquired_utc": properties["datetime"],
+            "available_utc": f.get("available_utc"),
             "season": f"{year}-{year+1}",
             "granule": scene,
             "native_grid_aligned": needs_alignment,
             "tile": scene.split(".")[2],
             "platform": properties.get("platform"),
+            "sensor": sensor_of(scene),
             "candidate_clear_pixels": int((roi & clear).sum()),
             "candidate_pixels": int(roi.sum()),
             "context_clear_pixels": int(clear.sum()),
             "candidate_median_ndvi": float(np.median(ndvi)) if ndvi.size else np.nan,
-            "source_stac": f"{API}/stac/v1/collections/hls2-l30/items/{scene}",
+            "source_stac": f"{API}/stac/v1/collections/hls2-{sensor_of(scene).lower()}/items/{scene}",
         }
         if published_dir is not None:
             row["full_interior_pixels"] = int(field.sum())
@@ -610,7 +650,11 @@ def prepare(features, site, out=None, published_dir=None, geometry=None):
         candidate_mask=roi,
         dates=chosen.date_utc.to_numpy(dtype="U10"),
         granules=np.array(ids),
-        bands=np.array(BANDS[:3]),
+        bands=np.array(BANDS[:3] if all(sensor_of(k)=="L30" for k in ids)
+                       else ("B03", "B04", "NIR_narrow_B05_or_B8A")),
+        sources=np.array(["NASA_HLSL30_v2" if sensor_of(k)=="L30"
+                          else "NASA_HLSS30_v2" for k in ids]),
+        nir_band_names=np.array([bands_for(k)[2] for k in ids]),
         crs=grid[0],
         transform=grid[1],
         longitude=site.lon,
@@ -624,6 +668,7 @@ def prepare(features, site, out=None, published_dir=None, geometry=None):
             "date_utc",
             "season",
             "granule",
+            "sensor",
             "candidate_clear_pixels",
             "candidate_pixels",
         ]
@@ -651,9 +696,48 @@ def prepare(features, site, out=None, published_dir=None, geometry=None):
     return labels
 
 
+def collect_saved_boundary(boundary: str | dict, field_id: int | str, *,
+                           as_of: str, seasons: int = 4, max_dates: int | None = None,
+                           workers: int = 3, plan_only: bool = False,
+                           include_s30: bool = False):
+    """Download a full-polygon window into a separate, versioned field batch.
+
+    Called explicitly by the UI. No change to the existing evia_pilot cache.
+    Use the existing NASA-CMR verified, Planetary Computer mirror pipeline.
+    """
+    import csv
+    from tempfile import TemporaryDirectory
+    from .field_hls import field_hls_plan, recent_season_periods, _geometry
+
+    plan = field_hls_plan(boundary, field_id)
+    cutoff = datetime.strptime(as_of, "%Y-%m-%d").date()
+    cutoff = min(cutoff, datetime.now(timezone.utc).date())
+    periods = recent_season_periods(cutoff, count=seasons)
+    if not periods:
+        raise ValueError("No September–May acquisition period precedes this assessment")
+    with TemporaryDirectory(prefix="agrisim-field-hls-") as temp:
+        temp_dir = Path(temp)
+        fields = temp_dir / "fields.csv"
+        with fields.open("w", newline="", encoding="utf-8") as output:
+            writer = csv.DictWriter(output, fieldnames=("field_id", "lon", "lat", "size", "start_date", "end_date"))
+            writer.writeheader()
+            for start, end in periods:
+                writer.writerow(dict(field_id=plan.site.name, lon=repr(plan.site.lon),
+                                     lat=repr(plan.site.lat), size=plan.site.size,
+                                     start_date=start, end_date=end))
+        parcels = temp_dir / "parcels.geojson"
+        parcels.write_text(json.dumps({"type": "FeatureCollection", "features": [{
+            "type": "Feature", "properties": {"field_id": plan.site.name},
+            "geometry": _geometry(boundary)}]}, allow_nan=False), encoding="utf-8")
+        return collect_fields(fields, size=plan.site.size, max_dates=max_dates,
+                              workers=workers, parcels=parcels, plan_only=plan_only,
+                              sensors=("L30", "S30") if include_s30 else ("L30",))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workers", type=int, default=5, choices=range(1, 9))
+    parser.add_argument("--include-s30", action="store_true", help="Include NASA HLSS30 alongside HLSL30")
     parser.add_argument("--site", help="Unique output name for a single field")
     parser.add_argument("--lon", type=float)
     parser.add_argument("--lat", type=float)
@@ -693,6 +777,7 @@ def main():
                 parcels=args.parcels,
                 cached_only=args.cached_only,
                 plan_only=args.plan,
+                sensors=("L30","S30") if args.include_s30 else ("L30",),
             )
             return
         if (
@@ -709,9 +794,10 @@ def main():
             SOWING_LAT if args.lat is None else args.lat,
             args.size,
         )
-        features = online_features(site, SOWING_SEASONS)
+        features = online_features(site, SOWING_SEASONS,
+                                   ("L30","S30") if args.include_s30 else ("L30",))
         if not features:
-            raise ValueError("No HLSL30 granules found")
+            raise ValueError("No verified HLS granules found")
         fetch_missing({site: features}, args.workers, False)
         out = site.directory(PROC)
         out.mkdir(parents=True, exist_ok=True)

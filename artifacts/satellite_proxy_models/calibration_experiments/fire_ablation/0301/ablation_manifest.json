@@ -1,0 +1,51 @@
+{
+  "date_code": "0301",
+  "seasons": [
+    2026
+  ],
+  "variants": [
+    "dynamic_fire",
+    "fixed_no_fire"
+  ],
+  "delta_definition": "fixed_no_fire minus dynamic_fire",
+  "delta_interpretation": "RMSE and Brier negative=better; coverage closer to target 0.8; ROC-AUC positive=better",
+  "comparison": [
+    {
+      "season": 2026,
+      "features_dynamic": 33,
+      "vigour_rmse_dynamic": 0.1040060956338062,
+      "cqr_coverage_dynamic": 0.9179393198941151,
+      "cqr_interval_width_dynamic": 0.3451166054826723,
+      "crop_raw_brier_dynamic": 0.1689870457082254,
+      "crop_sigmoid_brier_dynamic": 0.1570493417527157,
+      "crop_isotonic_brier_dynamic": 0.1582671198111208,
+      "crop_raw_roc_auc_dynamic": 0.7971493078637288,
+      "crop_sigmoid_roc_auc_dynamic": 0.7971493078637288,
+      "crop_isotonic_roc_auc_dynamic": 0.7965205040419105,
+      "features_fixed": 30,
+      "vigour_rmse_fixed": 0.0995863703513311,
+      "cqr_coverage_fixed": 0.9224190592547342,
+      "cqr_interval_width_fixed": 0.346534553266693,
+      "crop_raw_brier_fixed": 0.1712194395411666,
+      "crop_sigmoid_brier_fixed": 0.1590405020363462,
+      "crop_isotonic_brier_fixed": 0.1595067981040774,
+      "crop_raw_roc_auc_fixed": 0.7983290953835768,
+      "crop_sigmoid_roc_auc_fixed": 0.7983290953835768,
+      "crop_isotonic_roc_auc_fixed": 0.7989618817013567,
+      "delta_fixed_minus_dynamic_vigour_rmse": -0.004419725282475098,
+      "delta_fixed_minus_dynamic_cqr_coverage": 0.004479739360619073,
+      "delta_fixed_minus_dynamic_cqr_interval_width": 0.0014179477840207122,
+      "delta_fixed_minus_dynamic_crop_raw_brier": 0.002232393832941215,
+      "delta_fixed_minus_dynamic_crop_sigmoid_brier": 0.0019911602836305,
+      "delta_fixed_minus_dynamic_crop_isotonic_brier": 0.0012396782929565975,
+      "delta_fixed_minus_dynamic_crop_raw_roc_auc": 0.0011797875198479302,
+      "delta_fixed_minus_dynamic_crop_sigmoid_roc_auc": 0.0011797875198479302,
+      "delta_fixed_minus_dynamic_crop_isotonic_roc_auc": 0.0024413776594461867
+    }
+  ],
+  "notes": [
+    "Wildfire features enter dynamic rolling training only when post-2021 seasons available",
+    "The comparison is retrospective and not a prospective validation of 2027 models",
+    "Do not compare 2026 ablation against historical manifest from different estimator settings"
+  ]
+}

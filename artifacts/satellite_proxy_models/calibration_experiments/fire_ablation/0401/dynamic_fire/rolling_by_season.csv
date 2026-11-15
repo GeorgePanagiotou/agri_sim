@@ -1,0 +1,2 @@
+season,rows,train_through,calibration_start,calibration_through,features,conformal_offset,vigour_rmse,raw_coverage,cqr_coverage,raw_interval_width,cqr_interval_width,crop_raw_brier,crop_raw_roc_auc,crop_sigmoid_brier,crop_sigmoid_roc_auc,crop_isotonic_brier,crop_isotonic_roc_auc
+2026,4911,2022,2023,2025,34,0.05160444974899292,0.09339187327531087,0.5937690897984117,0.881286906943596,0.1840990061455068,0.2873079056434927,0.1512613328053409,0.8420742302804021,0.15419971507059893,0.8420742302804021,0.15584727478800525,0.8412750402124457

@@ -22,13 +22,14 @@ st.set_page_config(
 from evia_results import render as render_evia
 from area_explorer import render as render_areas
 
-_page = st.sidebar.radio("Data source", ["Rebuilt Evia results", "Area explorer", "Synthetic demonstration"])
-if _page == "Rebuilt Evia results":
-    render_evia()
-    st.stop()
+_page = st.sidebar.radio("Data source", ["Rebuilt Evia results", "Area explorer"])
 if _page == "Area explorer":
     render_areas()
-    st.stop()
+else:
+    render_evia()
+# The synthetic mock-up below (demo_data.py) is no longer in the menu (2026-11-15): both pages above use real data.
+# Its code is kept for reference; it never runs because of this stop.
+st.stop()
 
 import plotly.express as px
 import plotly.graph_objects as go

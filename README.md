@@ -3,9 +3,7 @@
 A modular, **non-MobileNet** decision-support prototype for rainfed crop rotations and sowing-week checks in North Evia, Greece. Uses only datasets named in the NASA Space Apps 2026 **Field Shift** challenge resources or ESA/FAO partner resources supplied in the challenge. NASA HLS Landsat and ESA Sentinel-2 imagery support NDVI/EVI2 phenology, environmental data support historical as-of-date assessment, and crop scenarios are explicitly farmer-editable.
 
 ## Demo and submission
-- **Live Demo:** [[agrisim_demo_30s.mp4](agrisim_demo_30s.mp4). It is recorded from the real app (no
-  mock-ups) with [docs/demo/record_demo.py](docs/demo/record_demo.py)](https://agri-sim.streamlit.app/
-).
+- **Live Demo:** https://agri-sim.streamlit.app/
 - **30-second demo video:** [agrisim_demo_30s.mp4](agrisim_demo_30s.mp4). It is recorded from the real app (no
   mock-ups) with [docs/demo/record_demo.py](docs/demo/record_demo.py).
 - **All NASA and partner data links:** [DATA_LINKS.md](DATA_LINKS.md).

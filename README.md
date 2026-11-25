@@ -1,5 +1,17 @@
 # AgriSim AI — Field Shift 2026
 
+<img src="docs/awards/open_science_award_athens_2026_badge.png" alt="Open Science Award, NASA Space Apps Challenge Athens 2026" width="170" align="right">
+
+🏆 **Open Science Award: NASA Space Apps Challenge Athens 2026** (Local Award, 14–15 November 2026,
+hackerspace.gr, organised with Libre Space Foundation).
+
+> *"For an openly licensed tool that turns four decades of Landsat field history into crop-rotation guidance,
+> tested on real fields in Evia and Crete."* (jury citation)
+
+Certificate: [PDF](docs/awards/open_science_award_athens_2026_certificate.pdf)
+
+<br clear="right">
+
 A modular, **non-MobileNet** decision-support prototype for rainfed crop rotations and sowing-week checks in North Evia, Greece. Uses only datasets named in the NASA Space Apps 2026 **Field Shift** challenge resources or ESA/FAO partner resources supplied in the challenge. NASA HLS Landsat and ESA Sentinel-2 imagery support NDVI/EVI2 phenology, environmental data support historical as-of-date assessment, and crop scenarios are explicitly farmer-editable.
 
 ## Demo and submission
